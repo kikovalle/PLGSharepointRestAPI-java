@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -546,6 +547,80 @@ public class PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
+	public JSONObject getFolderPermissions(String folder) throws Exception {
+		headers = new LinkedMultiValueMap<>();
+		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
+		headers.add("Accept", "application/json;odata=verbose");
+		headers.add("Content-Type", "application/json;odata=verbose");
+		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
+	    		headers, HttpMethod.GET, 
+	    			this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/ListItemAllFields/roleAssignments")
+	    		);
+	    
+	    ResponseEntity<String> response = restTemplate.exchange(requestEntity1, String.class);
+
+	    return new JSONObject(response.getBody());
+	}
+	
+	/**
+	 * @param folder
+	 * @param users
+	 * @param permission
+	 * @return
+	 * @throws Exception
+	 */
+	public Boolean removePermissionToFolder(String folder, Permission permission) throws Exception {
+		
+	    headers = new LinkedMultiValueMap<>();
+		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
+		headers.add("Accept", "application/json;odata=verbose");
+		headers.add("Content-Type", "application/json;odata=verbose");
+		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+
+	    List<Integer> userIds = new ArrayList<>();
+	    JSONObject permissions = getFolderPermissions(folder);
+	    JSONArray results = permissions.getJSONObject("d").getJSONArray("results");
+	    for (Object obj : results) {
+	    	if (obj instanceof JSONObject) {
+	    		System.out.println("Vamos ben....");
+	    		JSONObject jObj = (JSONObject) obj;
+	    		Integer principalId = jObj.getInt("PrincipalId");
+	    		if (principalId != null && !userIds.contains(principalId)) {
+	    			userIds.add(principalId);
+	    		}
+	    		LOG.debug("JSON payload retrieved from server for user {}", "");
+	    	}
+	    }
+	    
+	    headers = new LinkedMultiValueMap<>();
+		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
+		headers.add("Accept", "application/json;odata=verbose");
+		headers.add("Content-Type", "application/json;odata=verbose");
+		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers.add("X-HTTP-Method", "DELETE");
+	    for (Integer userId : userIds) {
+	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
+	    			headers, HttpMethod.POST, 
+	    			this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/ListItemAllFields/roleAssignments/getbyprincipalid(" + userId  +")")
+			);
+	    	
+	    	restTemplate.exchange(requestEntity1, String.class);
+	    }
+	    return Boolean.TRUE;
+	}
+	
+	
+	/**
+	 * @param folder
+	 * @param users
+	 * @param permission
+	 * @return
+	 * @throws Exception
+	 */
 	public Boolean removePermissionToUsers(String folder, List<String> users, Permission permission) throws Exception {
 		LOG.debug("Revoking {} permission to users {} in folder {}", new Object[] {permission, users, folder});
 		
@@ -586,9 +661,5 @@ public class PLGSharepointClient {
 	    }
 	    return Boolean.TRUE;
 	}
-	
-	
-	//TODO Move folder, move file and delete file
-	//TODO Implement way to send custom metadata when uploading files.
-	//TODO Folder metadata update with custom properties to be inherited by childs.
+
 }
