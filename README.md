@@ -13,7 +13,7 @@ As this is a maven project you have to clone this repo and compile it with maven
   
     mvn clean install
 
-Once the project is build, you can include the dependency in any other project as follos:
+Once the project is build, you can include the dependency in any other project as follow:
 
 		<dependency>
 			<groupId>com.panxoloto.sharepoint.rest</groupId>
