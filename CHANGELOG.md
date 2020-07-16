@@ -6,6 +6,10 @@ Changelog registry
 
 ### Changed
 ## 2020-07-16
+### Added
+- Added method to create a list
+- Added method to update a list description
+
 ### Changed
 - BugFix Solved issue on getting folder permissions (trying to iterate over JSONArray not possible).
 
