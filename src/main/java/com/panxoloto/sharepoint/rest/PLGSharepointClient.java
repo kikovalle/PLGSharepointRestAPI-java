@@ -125,6 +125,79 @@ public class PLGSharepointClient {
 	}
 
 	/**
+	 * @param baseFolderRemoteRelativeUrl
+	 * @param folder
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject createList(String listTitle, String description) throws Exception {
+		LOG.debug("createList siteUrl {} listTitle {} description {}", new Object[] {listTitle, description});
+		JSONObject payload = new JSONObject();
+		JSONObject meta = new JSONObject();
+		meta.put("type", "SP.List");
+		payload.put("__metadata", meta);
+		payload.put("AllowContentTypes", true);
+		payload.put("BaseTemplate", 100);
+		payload.put("ContentTypesEnabled", true);
+		payload.put("Description", description);
+		payload.put("Title", listTitle);
+		
+		String payloadStr = payload.toString();
+		headers = new LinkedMultiValueMap<>();
+		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
+		headers.add("Accept", "application/json;odata=verbose");
+		headers.add("Content-Type", "application/json;odata=verbose");
+		headers.add("Content-length", "" + payloadStr.getBytes().length);
+		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    
+	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
+    			headers, HttpMethod.POST, 
+    			this.tokenHelper.getSharepointSiteUrl("/_api/web/lists")
+    			);
+	    ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
+	    return new JSONObject(responseEntity.getBody());
+	}
+	
+	
+	/**
+	 * @param listTitle
+	 * @param newDescription
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject updateList(String listTitle, String newDescription) throws Exception {
+		LOG.debug("createList siteUrl {} listTitle {} description {}", new Object[] {listTitle, newDescription});
+		JSONObject payload = new JSONObject();
+		JSONObject meta = new JSONObject();
+		meta.put("type", "SP.List");
+		payload.put("__metadata", meta);
+		if (newDescription != null) {
+			payload.put("Description", newDescription);
+		}
+
+		String payloadStr = payload.toString();
+		headers = new LinkedMultiValueMap<>();
+		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
+		headers.add("Accept", "application/json;odata=verbose");
+		headers.add("Content-Type", "application/json;odata=verbose");
+		headers.add("Content-length", "" + payloadStr.getBytes().length);
+		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+		headers.add("X-HTTP-Method", "MERGE");
+		headers.add("IF-Match", "*");
+	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    
+	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
+    			headers, HttpMethod.POST, 
+    			this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" 
+    					+ UriUtils.encodeQuery(listTitle, StandardCharsets.UTF_8) 
+    					+ "')")
+    			);
+	    ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
+	    return new JSONObject(responseEntity.getBody());
+	}
+	
+	/**
 	 * @param title
 	 * @param jsonExtendedAttrs
 	 * @param filter
