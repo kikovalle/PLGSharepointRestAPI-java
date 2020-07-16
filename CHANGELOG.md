@@ -5,9 +5,13 @@ Changelog registry
 ### Added
 
 ### Changed
+## 2020-07-16
+### Changed
+- BugFix Solved issue on getting folder permissions (trying to iterate over JSONArray not possible).
+
 
 ## 2020-07-15
-### Added
+### Changed
 - BugFix Solved issue with special characters in list, files and folder names.
 
 ### Changed
