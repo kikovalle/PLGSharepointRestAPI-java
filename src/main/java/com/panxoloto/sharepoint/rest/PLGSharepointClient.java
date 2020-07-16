@@ -586,16 +586,13 @@ public class PLGSharepointClient {
 	    List<Integer> userIds = new ArrayList<>();
 	    JSONObject permissions = getFolderPermissions(folder);
 	    JSONArray results = permissions.getJSONObject("d").getJSONArray("results");
-	    for (Object obj : results) {
-	    	if (obj instanceof JSONObject) {
-	    		System.out.println("Vamos ben....");
-	    		JSONObject jObj = (JSONObject) obj;
-	    		Integer principalId = jObj.getInt("PrincipalId");
-	    		if (principalId != null && !userIds.contains(principalId)) {
-	    			userIds.add(principalId);
-	    		}
-	    		LOG.debug("JSON payload retrieved from server for user {}", "");
-	    	}
+	    for (int i = 0 ; i < results.length() ; i++) {
+    		JSONObject jObj = results.getJSONObject(i);
+    		Integer principalId = jObj.getInt("PrincipalId");
+    		if (principalId != null && !userIds.contains(principalId)) {
+    			userIds.add(principalId);
+    		}
+    		LOG.debug("JSON payload retrieved from server for user {}", "");
 	    }
 	    
 	    headers = new LinkedMultiValueMap<>();
