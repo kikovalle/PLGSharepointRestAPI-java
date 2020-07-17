@@ -3,7 +3,6 @@ package com.panxoloto.sharepoint.rest;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
@@ -14,12 +13,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriUtils;
 
 import com.panxoloto.sharepoint.rest.helper.AuthTokenHelper;
+import com.panxoloto.sharepoint.rest.helper.HeadersHelper;
 import com.panxoloto.sharepoint.rest.helper.Permission;
 
 public class PLGSharepointClient {
@@ -30,6 +29,7 @@ public class PLGSharepointClient {
 	private RestTemplate restTemplate;
 	private String spSiteUrl;
 	private AuthTokenHelper tokenHelper;
+	private HeadersHelper headerHelper;
 	
 	
 	/**
@@ -58,6 +58,7 @@ public class PLGSharepointClient {
 		try {
 			LOG.debug("Wrapper auth initialization performed successfully. Now you can perform actions on the site.");
 			this.tokenHelper.init();
+			this.headerHelper = new HeadersHelper(this.tokenHelper);
 		} catch (Exception e) {
 			LOG.error("Initialization failed!! Please check the user, pass, domain and spSiteUri parameters you provided", e);
 		}
@@ -80,11 +81,7 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject getAllLists(String data) throws Exception {
 		LOG.debug("getAllLists {}", data);
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(false);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(data, 
 	        headers, HttpMethod.GET, 
@@ -107,11 +104,7 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject getListByTitle(String title, String jsonExtendedAttrs) throws Exception {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(false);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
 	        headers, HttpMethod.GET, 
@@ -124,6 +117,32 @@ public class PLGSharepointClient {
 	    return new JSONObject(responseEntity.getBody());
 	}
 
+	/**
+	 * Retrieves list info by list title.
+	 * 
+	 * @param title.- Site list title to query info.
+	 * @param jsonExtendedAttrs.- form json body for advanced query (take a look at ms documentation about rest api).
+	 * @return json string with list information that can be used to get a JSONObject to use this info.
+	 * @throws Exception thrown when something went wrong.
+	 */
+	public JSONObject getListFields(String title) throws Exception {
+		LOG.debug("getListByTitle {} ", new Object[] {title});
+	    headers = headerHelper.getGetHeaders(false);
+
+	    RequestEntity<String> requestEntity = new RequestEntity<>("{}", 
+	        headers, HttpMethod.GET, 
+	        this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + UriUtils.encodeQuery(title, StandardCharsets.UTF_8) + "')/Fields")
+	        );
+
+	    ResponseEntity<String> responseEntity = 
+	        restTemplate.exchange(requestEntity, String.class);
+
+	    return new JSONObject(responseEntity.getBody());
+	}
+
+
+	
+	
 	/**
 	 * @param baseFolderRemoteRelativeUrl
 	 * @param folder
@@ -143,13 +162,7 @@ public class PLGSharepointClient {
 		payload.put("Title", listTitle);
 		
 		String payloadStr = payload.toString();
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+		headers = headerHelper.getPostHeaders(payloadStr);
 	    
 	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
     			headers, HttpMethod.POST, 
@@ -158,6 +171,8 @@ public class PLGSharepointClient {
 	    ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
 	    return new JSONObject(responseEntity.getBody());
 	}
+
+	
 	
 	
 	/**
@@ -177,15 +192,7 @@ public class PLGSharepointClient {
 		}
 
 		String payloadStr = payload.toString();
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-		headers.add("X-HTTP-Method", "MERGE");
-		headers.add("IF-Match", "*");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+		headers = headerHelper.getUpdateHeaders(payloadStr);
 	    
 	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
     			headers, HttpMethod.POST, 
@@ -196,6 +203,7 @@ public class PLGSharepointClient {
 	    ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
 	    return new JSONObject(responseEntity.getBody());
 	}
+
 	
 	/**
 	 * @param title
@@ -206,15 +214,15 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(true);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
 	        headers, HttpMethod.GET, 
-	        this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + UriUtils.encodeQuery(title, StandardCharsets.UTF_8) + "')/items", filter)
+	        this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + 
+//	        UriUtils.encodeQuery(
+	        		title
+//	        		, StandardCharsets.UTF_8) 
+	        + "')/items", filter)
 	        );
 
 	    ResponseEntity<String> responseEntity = 
@@ -231,11 +239,7 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject getFolderByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
 		LOG.debug("getFolderByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(false);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
 	        headers, HttpMethod.GET, 
@@ -257,13 +261,7 @@ public class PLGSharepointClient {
 	public Boolean deleteFile(String fileServerRelativeUrl) throws Exception {
 		LOG.debug("Deleting file {} ", fileServerRelativeUrl);
 
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("X-HTTP-Method", "DELETE");
-	    headers.add("IF-Match", "*");
+	    headers = headerHelper.getDeleteHeaders();
 	    
 	    RequestEntity<String> requestEntity = new RequestEntity<>("{}", 
 	        headers, HttpMethod.POST, 
@@ -273,6 +271,8 @@ public class PLGSharepointClient {
 	    restTemplate.exchange(requestEntity, String.class);
 	    return Boolean.TRUE;
 	}
+
+	
 	
 	/**
 	 * @param fileServerRelativeUrl
@@ -282,15 +282,11 @@ public class PLGSharepointClient {
 	public Resource downloadFile(String fileServerRelativeUrl) throws Exception {
 		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
 
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(true);
 	    
-	    RequestEntity<String> requestEntity = new RequestEntity<>("{}", 
+	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
 	        headers, HttpMethod.GET, 
-	        this.tokenHelper.getSharepointSiteUrl("_api/web/GetFileByServerRelativeUrl('" + UriUtils.encodeQuery(fileServerRelativeUrl, StandardCharsets.UTF_8) +"')/$value") 
+	        this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + UriUtils.encodeQuery(fileServerRelativeUrl, StandardCharsets.UTF_8) +"')/$value") 
 	        );
 
 	    ResponseEntity<Resource> response = restTemplate.exchange(requestEntity, Resource.class);
@@ -310,19 +306,15 @@ public class PLGSharepointClient {
 		submeta.put("type", "SP.ListItem");
 		jsonMetadata.put("__metadata", submeta);
 		
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("Content-Length", "" + resource.contentLength());
+	    headers = headerHelper.getPostHeaders("");
+	    headers.remove("Content-Length");
 	    
 	    byte[] resBytes = IOUtils.readFully(resource.getInputStream(), (int) resource.contentLength());
  
 	    RequestEntity<byte[]> requestEntity = new RequestEntity<>(resBytes, 
 	        headers, HttpMethod.POST, 
 	        this.tokenHelper.getSharepointSiteUrl(
-		    		"_api/web/GetFolderByServerRelativeUrl('" + UriUtils.encodeQuery(folder, StandardCharsets.UTF_8) +"')/Files/add(url='" 
+		    		"/_api/web/GetFolderByServerRelativeUrl('" + UriUtils.encodeQuery(folder, StandardCharsets.UTF_8) +"')/Files/add(url='" 
 					+ UriUtils.encodeQuery(resource.getFilename(), StandardCharsets.UTF_8) + "',overwrite=true)"
 		    		)
 	        );
@@ -339,15 +331,7 @@ public class PLGSharepointClient {
 
 	    LOG.debug("File uploaded to URI", serverRelFileUrl);
 	    String metadata = jsonMetadata.toString();
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("content-length", "" + metadata.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-		headers.add("X-HTTP-Method", "MERGE");
-		headers.add("IF-MATCH", "*");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getUpdateHeaders(metadata);
 
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
 
@@ -373,16 +357,7 @@ public class PLGSharepointClient {
 		jsonMetadata.put("__metadata", meta);
 	    LOG.debug("File uploaded to URI", fileServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("content-length", "" + metadata.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-		headers.add("X-HTTP-Method", "MERGE");
-		headers.add("IF-MATCH", "*");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-
+	    headers = headerHelper.getUpdateHeaders(metadata);
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
 
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>(metadata, 
@@ -407,16 +382,7 @@ public class PLGSharepointClient {
 		jsonMetadata.put("__metadata", meta);
 	    LOG.debug("File uploaded to URI", folderServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("content-length", "" + metadata.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-		headers.add("X-HTTP-Method", "MERGE");
-		headers.add("IF-MATCH", "*");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-
+	    headers = headerHelper.getUpdateHeaders(metadata);
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
 
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>(metadata, 
@@ -436,12 +402,7 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject breakRoleInheritance(String folder) throws Exception {
 		LOG.debug("Breaking role inheritance on folder {}", folder);
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getPostHeaders("");
 
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>("", 
 	        headers, HttpMethod.POST, 
@@ -468,14 +429,8 @@ public class PLGSharepointClient {
 		payload.put("__metadata", meta);
 		payload.put("ServerRelativeUrl", baseFolderRemoteRelativeUrl + "/" + folder);
 		String payloadStr = payload.toString();
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    
+		headers = headerHelper.getPostHeaders(payloadStr);
+		
 	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
     			headers, HttpMethod.POST, 
     			this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" +  UriUtils.encodeQuery(baseFolderRemoteRelativeUrl, StandardCharsets.UTF_8) + "')/folders")
@@ -492,12 +447,7 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject moveFolder(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
 		LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("IF-Match", "*");
+		headers = headerHelper.getPostHeaders("");
 	    
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
     			headers, HttpMethod.POST, 
@@ -521,12 +471,7 @@ public class PLGSharepointClient {
 	 */
 	public JSONObject moveFile(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
 		LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("IF-Match", "*");
+		headers = headerHelper.getPostHeaders("");
 	    
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
     			headers, HttpMethod.POST, 
@@ -549,14 +494,7 @@ public class PLGSharepointClient {
 	 */
 	public Boolean removeFolder(String folderRemoteRelativeUrl) throws Exception {
 		LOG.debug("Deleting folder {}", folderRemoteRelativeUrl);
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-		headers.add("X-HTTP-Method", "DELETE");
-		headers.add("IF-Match", "*");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+		headers = headerHelper.getDeleteHeaders();
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
     			headers, HttpMethod.POST, 
@@ -578,12 +516,7 @@ public class PLGSharepointClient {
 	public Boolean grantPermissionToUsers(String folder, List<String> users, Permission permission) throws Exception {
 		LOG.debug("Granting {} permission to users {} in folder {}", new Object[] {permission, users, folder});
 
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(false);
 
 	    List<Integer> userIds = new ArrayList<>();
 	    for (String user : users) {
@@ -598,12 +531,7 @@ public class PLGSharepointClient {
 	    	userIds.add(userId);
 	    }
 	    
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getPostHeaders("{}");
 
 	    for (Integer userId : userIds) {
 	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
@@ -624,12 +552,7 @@ public class PLGSharepointClient {
 	 * @throws Exception
 	 */
 	public JSONObject getFolderPermissions(String folder) throws Exception {
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+		headers = headerHelper.getGetHeaders(false);
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
 	    		headers, HttpMethod.GET, 
 	    			this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + UriUtils.encodeQuery(folder, StandardCharsets.UTF_8) + "')/ListItemAllFields/roleAssignments")
@@ -648,14 +571,6 @@ public class PLGSharepointClient {
 	 * @throws Exception
 	 */
 	public Boolean removePermissionToFolder(String folder, Permission permission) throws Exception {
-		
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-
 	    List<Integer> userIds = new ArrayList<>();
 	    JSONObject permissions = getFolderPermissions(folder);
 	    JSONArray results = permissions.getJSONObject("d").getJSONArray("results");
@@ -668,13 +583,7 @@ public class PLGSharepointClient {
     		LOG.debug("JSON payload retrieved from server for user {}", "");
 	    }
 	    
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("X-HTTP-Method", "DELETE");
+	    headers = headerHelper.getDeleteHeaders();
 	    for (Integer userId : userIds) {
 	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
 	    			headers, HttpMethod.POST, 
@@ -697,12 +606,7 @@ public class PLGSharepointClient {
 	public Boolean removePermissionToUsers(String folder, List<String> users, Permission permission) throws Exception {
 		LOG.debug("Revoking {} permission to users {} in folder {}", new Object[] {permission, users, folder});
 		
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    headers = headerHelper.getGetHeaders(false);
 
 	    List<Integer> userIds = new ArrayList<>();
 	    for (String user : users) {
@@ -717,13 +621,7 @@ public class PLGSharepointClient {
 	    	userIds.add(userId);
 	    }
 	    
-	    headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("X-HTTP-Method", "DELETE");
+	    headers = headerHelper.getDeleteHeaders();
 	    for (Integer userId : userIds) {
 	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
 	    			headers, HttpMethod.POST, 
