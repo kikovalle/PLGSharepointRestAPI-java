@@ -5,6 +5,17 @@ Changelog registry
 ### Added
 
 ### Changed
+
+
+## 2020-07-17
+### Added
+- Tested new methods to retrieve list fields
+- Added helper to build request headers
+
+### Changed
+- BugFix Solved in getting list items.
+
+
 ## 2020-07-16
 ### Added
 - Added method to create a list
