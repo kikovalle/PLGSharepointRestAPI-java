@@ -1,7 +1,5 @@
 package com.panxoloto.sharepoint.rest;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONObject;
