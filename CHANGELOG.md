@@ -1,11 +1,12 @@
 # Change Log
 Changelog registry
 
-## [Unreleased]
+## 2020-09-25
 ### Added
 
 ### Changed
-
+ - Separate implementations for sharepoiont online and on premises
+ - Added a interface to use both immplementations as one unique interface
 
 ## 2020-07-17
 ### Added
