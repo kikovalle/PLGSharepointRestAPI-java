@@ -1,5 +1,6 @@
 package com.panxoloto.sharepoint.rest.helper;
 
+import org.apache.http.HttpHeaders;
 import org.springframework.util.LinkedMultiValueMap;
 
 public class HeadersOnPremiseHelper {
@@ -11,6 +12,8 @@ public class HeadersOnPremiseHelper {
 		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 		headers.add("Accept", "application/json;odata=verbose");
 		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+		headers.add("X-FORMS_BASED_AUTH_ACCEPTED", "f");
+		headers.add(HttpHeaders.USER_AGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)");
 	    return headers;
 	}
 	
@@ -24,6 +27,8 @@ public class HeadersOnPremiseHelper {
 		headers.add("Content-Type", "application/json;odata=verbose");
 		headers.add("Content-length", "" + payloadStr.getBytes().length);
 		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+		headers.add("X-FORMS_BASED_AUTH_ACCEPTED", "f");
+		headers.add(HttpHeaders.USER_AGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)");
 	    return headers;
 	}
 	
