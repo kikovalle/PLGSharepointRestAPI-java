@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnPremises;
 import com.panxoloto.sharepoint.rest.helper.HeadersOnPremiseHelper;
+import com.panxoloto.sharepoint.rest.helper.HttpProtocols;
 import com.panxoloto.sharepoint.rest.helper.Permission;
 
 public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
@@ -34,7 +35,9 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	private String spSiteUrl;
 	private HeadersOnPremiseHelper headerHelper;
 	private AuthTokenHelperOnPremises tokenHelper;
-	
+	private HttpProtocols protocol = HttpProtocols.HTTPS;
+
+
 	/**
 	 * @param spSiteUr.- The sharepoint site URL like https://contoso.sharepoint.com/sites/contososite
 	 */
@@ -75,7 +78,16 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 			LOG.error("Initialization failed!! Please check the user, pass, domain and spSiteUri parameters you provided", e);
 		}
 	}
-	
+
+	public HttpProtocols getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(HttpProtocols protocol) {
+		this.protocol = protocol;
+		tokenHelper.setProtocol(protocol);
+	}
+
 	/**
 	 * Method to get json string wich you can transform to a JSONObject and get data from it.
 	 * 
