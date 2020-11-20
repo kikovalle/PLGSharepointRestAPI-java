@@ -105,8 +105,8 @@ public interface PLGSharepointClient {
 	 */
 	Boolean deleteFile(String fileServerRelativeUrl) throws Exception;
 
-	
-	
+	JSONObject getFileInfo(String fileServerRelativeUrl) throws Exception;
+
 	/**
 	 * @param fileServerRelativeUrl
 	 * @return

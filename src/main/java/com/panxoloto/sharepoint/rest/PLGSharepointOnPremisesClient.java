@@ -275,7 +275,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 */
 	@Override
 	public JSONObject getFolderFoldersByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
-		LOG.debug("getFolderByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
+		LOG.debug("getFolderFoldersByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 		headers = headerHelper.getGetHeaders(false);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
@@ -298,7 +298,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 */
 	@Override
 	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
-		LOG.debug("getFolderByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
+		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 		headers = headerHelper.getGetHeaders(false);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
@@ -322,8 +322,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Deleting file {} ", fileServerRelativeUrl);
 
 	    headers = headerHelper.getDeleteHeaders();
-	    
-	    RequestEntity<String> requestEntity = new RequestEntity<>("{}", 
+
+	    RequestEntity<String> requestEntity = new RequestEntity<>("{}",
 	        headers, HttpMethod.POST, 
 	        this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')")
 	        );
@@ -338,19 +338,45 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 * @throws Exception
 	 */
 	@Override
+	public JSONObject getFileInfo(String fileServerRelativeUrl) throws Exception {
+		LOG.debug("Getting file info {} ", fileServerRelativeUrl);
+
+		headers = headerHelper.getGetHeaders(true);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>("",
+			  headers, HttpMethod.GET,
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')")
+		);
+
+		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+		return new JSONObject(responseEntity.getBody());
+	}
+
+
+	/**
+	 * @param fileServerRelativeUrl
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
 	public Resource downloadFile(String fileServerRelativeUrl) throws Exception {
+	    return downloadFileWithReponse(fileServerRelativeUrl).getBody();
+	}
+
+	public ResponseEntity<Resource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception {
 		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
 
-	    headers = headerHelper.getGetHeaders(true);
-	    
-	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
-	        headers, HttpMethod.GET, 
-	        this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
-	        );
+		headers = headerHelper.getGetHeaders(true);
 
-	    ResponseEntity<Resource> response = restTemplate.exchange(requestEntity, Resource.class);
-	    return response.getBody();
+		RequestEntity<String> requestEntity = new RequestEntity<>("",
+			  headers, HttpMethod.GET,
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
+		);
+
+		ResponseEntity<Resource> response = restTemplate.exchange(requestEntity, Resource.class);
+		return response;
 	}
+
 
 	/**
 	 * @param folder

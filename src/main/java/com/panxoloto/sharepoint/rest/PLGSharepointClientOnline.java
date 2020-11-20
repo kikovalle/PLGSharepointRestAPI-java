@@ -250,7 +250,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	 */
 	@Override
 	public JSONObject getFolderFoldersByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
-		LOG.debug("getFolderByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
+		LOG.debug("getFolderFoldersByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 		headers = headerHelper.getGetHeaders(false);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
@@ -272,7 +272,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	 */
 	@Override
 	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
-		LOG.debug("getFolderByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
+		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 		headers = headerHelper.getGetHeaders(false);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
@@ -307,8 +307,27 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    return Boolean.TRUE;
 	}
 
-	
-	
+
+	/**
+	 * @param fileServerRelativeUrl
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public JSONObject getFileInfo(String fileServerRelativeUrl) throws Exception {
+		LOG.debug("Getting file info {} ", fileServerRelativeUrl);
+
+		headers = headerHelper.getGetHeaders(true);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>("",
+			  headers, HttpMethod.GET,
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')")
+		);
+
+		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+		return new JSONObject(responseEntity.getBody());
+	}
+
 	/**
 	 * @param fileServerRelativeUrl
 	 * @return
