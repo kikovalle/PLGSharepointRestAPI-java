@@ -1,6 +1,7 @@
 package com.panxoloto.sharepoint.rest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.http.auth.AuthScope;
@@ -36,7 +37,9 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	private HeadersOnPremiseHelper headerHelper;
 	private AuthTokenHelperOnPremises tokenHelper;
 	private HttpProtocols protocol = HttpProtocols.HTTPS;
-
+	private String digestKey = null;
+	private Date digestKeyExpiration;
+	private boolean useDigestKey = false;
 
 	/**
 	 * @param spSiteUr.- The sharepoint site URL like https://contoso.sharepoint.com/sites/contososite
@@ -88,6 +91,51 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		tokenHelper.setProtocol(protocol);
 	}
 
+	public void setUseDigestKey(boolean useDigestKey) {
+		this.useDigestKey = useDigestKey;
+	}
+
+	public String getNewRequestDigestKey() throws Exception {
+		RequestEntity<String> requestEntity = new RequestEntity<>("{}",
+																  headers, HttpMethod.POST,
+																  this.tokenHelper.getSharepointSiteUrl("/_api/contextinfo")
+		);
+
+		long requestTime = System.currentTimeMillis();
+
+		ResponseEntity<String> response = restTemplate.exchange(requestEntity, String.class);
+
+		JSONObject body = new JSONObject(response.getBody());
+		JSONObject d =  body.getJSONObject("d");
+		JSONObject info =  d.getJSONObject("GetContextWebInformation");
+
+		digestKey = (String) info.get("FormDigestValue");
+		Integer expiration = (Integer) info.get("FormDigestTimeoutSeconds");
+		if (expiration == null || expiration.intValue()<30 || expiration.intValue()>24*3600) {
+			expiration = 1800;
+		}
+
+		digestKeyExpiration = new Date(requestTime + (expiration-5)*1000l);
+
+		return digestKey;
+	}
+
+	public String checkDigestKey() throws Exception {
+		if (digestKey == null || new Date().after(digestKeyExpiration)) {
+			getNewRequestDigestKey();
+		}
+		return digestKey;
+	}
+
+
+	private void addDigestKeyHeader(MultiValueMap<String, String> headers) throws Exception {
+		if (useDigestKey) {
+			checkDigestKey();
+			headers.add("X-RequestDigest", digestKey);
+		}
+	}
+
+
 	/**
 	 * Method to get json string wich you can transform to a JSONObject and get data from it.
 	 * 
@@ -100,6 +148,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getAllLists(String data) throws Exception {
 		LOG.debug("getAllLists {}", data);
 	    headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(data, 
 	        headers, HttpMethod.GET, 
@@ -124,6 +173,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getListByTitle(String title, String jsonExtendedAttrs) throws Exception {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
 	    headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
 	        headers, HttpMethod.GET, 
@@ -147,8 +197,9 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getListFields(String title) throws Exception {
 		LOG.debug("getListByTitle {} ", new Object[] {title});
 	    headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
-	    RequestEntity<String> requestEntity = new RequestEntity<>("{}", 
+	    RequestEntity<String> requestEntity = new RequestEntity<>("{}",
 	        headers, HttpMethod.GET, 
 	        this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + title + "')/Fields")
 	        );
@@ -183,7 +234,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		
 		String payloadStr = payload.toString();
 		headers = headerHelper.getPostHeaders(payloadStr);
-	    
+		addDigestKeyHeader(headers);
+
 	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
     			headers, HttpMethod.POST, 
     			this.tokenHelper.getSharepointSiteUrl("/_api/web/lists")
@@ -211,7 +263,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 		String payloadStr = payload.toString();
 		headers = headerHelper.getUpdateHeaders(payloadStr);
-	    
+		addDigestKeyHeader(headers);
+
 	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
     			headers, HttpMethod.POST, 
     			this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + listTitle + "')")
@@ -232,6 +285,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
 	    headers = headerHelper.getGetHeaders(true);
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
 	        headers, HttpMethod.GET, 
@@ -254,6 +308,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getFolderByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
 		LOG.debug("getFolderByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 	    headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
 	        headers, HttpMethod.GET, 
@@ -277,6 +332,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getFolderFoldersByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
 		LOG.debug("getFolderFoldersByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 		headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 			  headers, HttpMethod.GET,
@@ -300,6 +356,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
 		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
 		headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 			  headers, HttpMethod.GET,
@@ -322,6 +379,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Deleting file {} ", fileServerRelativeUrl);
 
 	    headers = headerHelper.getDeleteHeaders();
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>("{}",
 	        headers, HttpMethod.POST, 
@@ -342,6 +400,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Getting file info {} ", fileServerRelativeUrl);
 
 		headers = headerHelper.getGetHeaders(true);
+		addDigestKeyHeader(headers);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>("",
 			  headers, HttpMethod.GET,
@@ -367,6 +426,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
 
 		headers = headerHelper.getGetHeaders(true);
+		addDigestKeyHeader(headers);
 
 		RequestEntity<String> requestEntity = new RequestEntity<>("",
 			  headers, HttpMethod.GET,
@@ -394,6 +454,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		
 	    headers = headerHelper.getPostHeaders("");
 	    headers.remove("Content-Length");
+	    addDigestKeyHeader(headers);
 
 	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
 	        headers, HttpMethod.POST, 
@@ -416,6 +477,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    LOG.debug("File uploaded to URI", serverRelFileUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
+		addDigestKeyHeader(headers);
 
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
 
@@ -428,6 +490,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    LOG.debug("Updated file metadata Status {}", responseEntity1.getStatusCode());
 	    return jsonFileInfo;
 	}
+
 
 	/**
 	 * @param fileServerRelatUrl
@@ -443,6 +506,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    LOG.debug("File uploaded to URI", fileServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
+		addDigestKeyHeader(headers);
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
 
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>(metadata, 
@@ -469,6 +533,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    LOG.debug("File uploaded to URI", folderServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
+		addDigestKeyHeader(headers);
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
 
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>(metadata, 
@@ -490,6 +555,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject breakRoleInheritance(String folder) throws Exception {
 		LOG.debug("Breaking role inheritance on folder {}", folder);
 	    headers = headerHelper.getPostHeaders("");
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity1 = new RequestEntity<>("", 
 	        headers, HttpMethod.POST, 
@@ -518,7 +584,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		payload.put("ServerRelativeUrl", baseFolderRemoteRelativeUrl + "/" + folder);
 		String payloadStr = payload.toString();
 		headers = headerHelper.getPostHeaders(payloadStr);
-		
+		addDigestKeyHeader(headers);
+
 	    RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr, 
     			headers, HttpMethod.POST, 
     			this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" +  baseFolderRemoteRelativeUrl + "')/folders")
@@ -537,7 +604,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject moveFolder(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
 		LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
 		headers = headerHelper.getPostHeaders("");
-	    
+		addDigestKeyHeader(headers);
+
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
     			headers, HttpMethod.POST, 
     			this.tokenHelper.getSharepointSiteUrl(
@@ -559,7 +627,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public JSONObject moveFile(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
 		LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
 		headers = headerHelper.getPostHeaders("");
-	    
+		addDigestKeyHeader(headers);
+
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
     			headers, HttpMethod.POST, 
     			this.tokenHelper.getSharepointSiteUrl(
@@ -580,6 +649,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public Boolean removeFolder(String folderRemoteRelativeUrl) throws Exception {
 		LOG.debug("Deleting folder {}", folderRemoteRelativeUrl);
 		headers = headerHelper.getDeleteHeaders();
+		addDigestKeyHeader(headers);
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
     			headers, HttpMethod.POST, 
@@ -601,6 +671,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Granting {} permission to users {} in folder {}", new Object[] {permission, users, folder});
 
 	    headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 	    List<Integer> userIds = new ArrayList<>();
 	    for (String user : users) {
@@ -616,6 +687,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    }
 	    
 	    headers = headerHelper.getPostHeaders("{}");
+		addDigestKeyHeader(headers);
 
 	    for (Integer userId : userIds) {
 	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
@@ -636,7 +708,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	@Override
 	public JSONObject getFolderPermissions(String folder) throws Exception {
 		headers = headerHelper.getGetHeaders(false);
-	    RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
+		addDigestKeyHeader(headers);
+	    RequestEntity<String> requestEntity1 = new RequestEntity<>("{}",
 	    		headers, HttpMethod.GET, 
 	    			this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/ListItemAllFields/roleAssignments")
 	    		);
@@ -667,6 +740,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    }
 	    
 	    headers = headerHelper.getDeleteHeaders();
+		addDigestKeyHeader(headers);
 	    for (Integer userId : userIds) {
 	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
 	    			headers, HttpMethod.POST, 
@@ -690,6 +764,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Revoking {} permission to users {} in folder {}", new Object[] {permission, users, folder});
 		
 	    headers = headerHelper.getGetHeaders(false);
+		addDigestKeyHeader(headers);
 
 	    List<Integer> userIds = new ArrayList<>();
 	    for (String user : users) {
@@ -705,6 +780,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    }
 	    
 	    headers = headerHelper.getDeleteHeaders();
+		addDigestKeyHeader(headers);
 	    for (Integer userId : userIds) {
 	    	RequestEntity<String> requestEntity1 = new RequestEntity<>("{}", 
 	    			headers, HttpMethod.POST, 
