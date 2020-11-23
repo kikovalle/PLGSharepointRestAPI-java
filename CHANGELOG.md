@@ -1,12 +1,19 @@
 # Change Log
 Changelog registry
 
-## 2020-09-25
+## 2020-11-23
 ### Added
+- methods for folder and file listing of a folder
+- support for HTTP protocol for on-premises
+- authorization token usage for on-premises
+
+
+## 2020-09-25
 
 ### Changed
- - Separate implementations for sharepoiont online and on premises
- - Added a interface to use both immplementations as one unique interface
+- Separate implementations for sharepoiont online and on premises
+- Added a interface to use both immplementations as one unique interface
+
 
 ## 2020-07-17
 ### Added
@@ -30,11 +37,8 @@ Changelog registry
 ### Changed
 - BugFix Solved issue with special characters in list, files and folder names.
 
-### Changed
 
 ## 2020-07-14
 ### Added
 - Remove a permission to all users in a folder (requires unique permissions in folder).
 - Added method to retrieve all role assignments of a folder in a sharepoint list.
-
-### Changed
