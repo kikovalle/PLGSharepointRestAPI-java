@@ -4,6 +4,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,6 +17,8 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,6 +35,15 @@ public class StreamRestTemplate extends RestTemplate {
 	public StreamRestTemplate(ClientHttpRequestFactory requestFactory) {
 		super(requestFactory);
 		super.setInterceptors(Lists.newArrayList(deferredCloseClientHttpRequestInterceptor));
+		List<HttpMessageConverter<?>> msgConverters = getMessageConverters();
+		List<HttpMessageConverter<?>> toRemove = new ArrayList<>();
+		for (HttpMessageConverter<?> converter : msgConverters) {
+			if (converter instanceof ResourceHttpMessageConverter) {
+				toRemove.add(converter);
+			}
+		}
+		msgConverters.removeAll(toRemove);
+		msgConverters.add(new ResourceHttpMessageConverter(true));
 	}
 
 	@Override

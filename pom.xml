@@ -25,7 +25,16 @@
 		<spring.framework>5.2.7.RELEASE</spring.framework>
 		<serializer.version>2.8.1</serializer.version>
 	</properties>
-	
+
+	<distributionManagement>
+		<repository>
+			<id>on-releases</id>
+			<name>ON Releases</name>
+			<url>http://maven.onsemi.com/maven2/content/repositories/on-releases</url>
+		</repository>
+	</distributionManagement>
+
+
 	<dependencies>
 			<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
 		<dependency>
