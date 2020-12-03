@@ -14,13 +14,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnPremises;
 import com.panxoloto.sharepoint.rest.helper.HeadersOnPremiseHelper;
@@ -31,7 +31,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 
 	private static final Logger LOG = LoggerFactory.getLogger(PLGSharepointOnPremisesClient.class);
-	private RestTemplate restTemplate;
+	private StreamRestTemplate restTemplate;
 	private String spSiteUrl;
 	private HeadersOnPremiseHelper headerHelper;
 	private AuthTokenHelperOnPremises tokenHelper;
@@ -62,7 +62,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		        .build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
 		requestFactory.setHttpClient(httpClient);
-		this.restTemplate = new RestTemplate(requestFactory);
+		this.restTemplate = new StreamRestTemplate(requestFactory);
 
 		this.spSiteUrl = spSiteUrl;
 		if (this.spSiteUrl.endsWith("/")) {
@@ -397,11 +397,11 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 * @throws Exception
 	 */
 	@Override
-	public Resource downloadFile(String fileServerRelativeUrl) throws Exception {
+	public InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception {
 	    return downloadFileWithReponse(fileServerRelativeUrl).getBody();
 	}
 
-	public ResponseEntity<Resource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception {
+	public ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception {
 		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
 
 		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
@@ -411,10 +411,9 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
 		);
 
-		ResponseEntity<Resource> response = restTemplate.exchange(requestEntity, Resource.class);
+		ResponseEntity<InputStreamResource> response = restTemplate.exchange(requestEntity, InputStreamResource.class);
 		return response;
 	}
-
 
 	/**
 	 * @param folder

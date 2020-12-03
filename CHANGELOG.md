@@ -1,11 +1,12 @@
 # Change Log
 Changelog registry
 
-## 2020-11-23
+## 2020-12-03
 ### Added
 - methods for folder and file listing of a folder
 - support for HTTP protocol for on-premises
-- authorization token usage for on-premises
+- digestKey usage for on-premises
+- returns InputStream from downloadFile to support large files for on-premises
 
 
 ## 2020-09-25
