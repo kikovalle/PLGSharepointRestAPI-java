@@ -43,7 +43,7 @@ public class StreamRestTemplate extends RestTemplate {
 			}
 		}
 		msgConverters.removeAll(toRemove);
-		msgConverters.add(new ResourceHttpMessageConverter(true));
+		msgConverters.add(0, new ResourceHttpMessageConverter(true));
 	}
 
 	@Override
