@@ -22,7 +22,7 @@
 	</build>
 
 	<properties>
-		<spring.framework>5.2.7.RELEASE</spring.framework>
+		<spring.framework>5.1.7.RELEASE</spring.framework>
 		<serializer.version>2.8.1</serializer.version>
 	</properties>
 
