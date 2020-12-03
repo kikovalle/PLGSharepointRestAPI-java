@@ -397,7 +397,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 * @throws Exception
 	 */
 	@Override
-	public Resource downloadFile(String fileServerRelativeUrl) throws Exception {
+	public InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception {
 	    return downloadFileWithReponse(fileServerRelativeUrl).getBody();
 	}
 
