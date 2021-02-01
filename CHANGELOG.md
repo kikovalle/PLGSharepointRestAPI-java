@@ -1,6 +1,11 @@
 # Change Log
 Changelog registry
 
+
+## 2021-02-01
+### Added
+- method to upload a file with a final file name (usefull when upload resources from a ByteArrayResource that doesn't returns a filename).
+
 ## 2020-12-03
 ### Added
 - methods for folder and file listing of a folder

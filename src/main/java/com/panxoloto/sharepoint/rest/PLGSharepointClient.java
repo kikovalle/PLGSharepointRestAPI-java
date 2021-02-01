@@ -124,6 +124,16 @@ public interface PLGSharepointClient {
 	JSONObject uploadFile(String folder, Resource resource, JSONObject jsonMetadata) throws Exception;
 
 	/**
+	 * @param folder
+	 * @param resource
+	 * @param fileName
+	 * @param jsonMetadata
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject uploadFile(String folder, Resource resource, String fileName, JSONObject jsonMetadata) throws Exception;
+	
+	/**
 	 * @param fileServerRelatUrl
 	 * @param jsonMetadata
 	 * @return

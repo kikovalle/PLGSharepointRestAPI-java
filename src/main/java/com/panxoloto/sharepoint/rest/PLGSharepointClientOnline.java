@@ -400,6 +400,57 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	}
 
 	/**
+	 * @param folder
+	 * @param resource
+	 * @param jsonMetadata
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public JSONObject uploadFile(String folder, Resource resource, String fileName, JSONObject jsonMetadata) throws Exception {
+		LOG.debug("Uploading file {} to folder {}", fileName, folder);
+		JSONObject submeta = new JSONObject();
+		submeta.put("type", "SP.ListItem");
+		jsonMetadata.put("__metadata", submeta);
+		
+	    headers = headerHelper.getPostHeaders("");
+	    headers.remove("Content-Length");
+
+	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
+	        headers, HttpMethod.POST, 
+	        this.tokenHelper.getSharepointSiteUrl(
+		    		"/_api/web/GetFolderByServerRelativeUrl('" + folder +"')/Files/add(url='"
+					+ fileName + "',overwrite=true)"
+		    		)
+	        );
+
+	    ResponseEntity<String> responseEntity = 
+	        restTemplate.exchange(requestEntity, String.class);
+
+	    String fileInfoStr = responseEntity.getBody();
+	    
+	    LOG.debug("Retrieved response from server with json");
+	    
+	    JSONObject jsonFileInfo = new JSONObject(fileInfoStr);
+	    String serverRelFileUrl = jsonFileInfo.getJSONObject("d").getString("ServerRelativeUrl");
+
+	    LOG.debug("File uploaded to URI", serverRelFileUrl);
+	    String metadata = jsonMetadata.toString();
+	    headers = headerHelper.getUpdateHeaders(metadata);
+
+	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
+
+	    RequestEntity<String> requestEntity1 = new RequestEntity<>(metadata, 
+	        headers, HttpMethod.POST, 
+	        this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + serverRelFileUrl + "')/listitemallfields")
+	        );
+	    ResponseEntity<String> responseEntity1 = 
+		        restTemplate.exchange(requestEntity1, String.class);
+	    LOG.debug("Updated file metadata Status {}", responseEntity1.getStatusCode());
+	    return jsonFileInfo;
+	}
+	
+	/**
 	 * @param fileServerRelatUrl
 	 * @param jsonMetadata
 	 * @return
