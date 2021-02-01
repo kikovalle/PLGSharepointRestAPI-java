@@ -264,6 +264,22 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		return new JSONObject(responseEntity.getBody());
 	}
 
+	@Override
+	public JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception {
+		LOG.debug("getFolderFilesByRelativeUrl {} ", new Object[] {folderServerRelativeUrl});
+		headers = headerHelper.getGetHeaders(false);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>("{}",
+			  headers, HttpMethod.GET,
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folderServerRelativeUrl + "')/Files")
+		);
+
+		ResponseEntity<String> responseEntity =
+				restTemplate.exchange(requestEntity, String.class);
+
+		return new JSONObject(responseEntity.getBody());
+	}
+	
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.

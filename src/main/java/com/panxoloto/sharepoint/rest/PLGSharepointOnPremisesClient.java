@@ -810,4 +810,21 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("Nothing to do here as we are using a credentials provider on the rest template");
 	}
 
+	@Override
+	public JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception {
+		LOG.debug("getFolderFilesByRelativeUrl {} ", new Object[] {folderServerRelativeUrl});
+		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>("{}",
+			  headers, HttpMethod.GET,
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folderServerRelativeUrl + "')/Files")
+		);
+
+		ResponseEntity<String> responseEntity =
+				restTemplate.exchange(requestEntity, String.class);
+
+		return new JSONObject(responseEntity.getBody());
+	}
+	
+
 }

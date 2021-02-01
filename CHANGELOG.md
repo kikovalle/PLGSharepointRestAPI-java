@@ -5,6 +5,7 @@ Changelog registry
 ## 2021-02-01
 ### Added
 - method to upload a file with a final file name (usefull when upload resources from a ByteArrayResource that doesn't returns a filename).
+- method to list files inside a folder by server folder remote url.
 
 ## 2020-12-03
 ### Added

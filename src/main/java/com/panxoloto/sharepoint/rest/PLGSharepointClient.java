@@ -222,4 +222,11 @@ public interface PLGSharepointClient {
 	 * @throws Exception
 	 */
 	Boolean removePermissionToUsers(String folder, List<String> users, Permission permission) throws Exception;
+
+	/**
+	 * @param folderServerRelativeUrl
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception;
 }
