@@ -1,6 +1,9 @@
 # Change Log
 Changelog registry
 
+## 2021-02-03
+### Added
+- Allow custom metadata type in folder and file creation.
 
 ## 2021-02-01
 ### Added
