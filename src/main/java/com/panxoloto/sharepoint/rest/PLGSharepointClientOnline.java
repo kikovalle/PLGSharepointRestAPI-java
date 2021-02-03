@@ -359,7 +359,11 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	public JSONObject uploadFile(String folder, Resource resource, JSONObject jsonMetadata) throws Exception {
 		LOG.debug("Uploading file {} to folder {}", resource.getFilename(), folder);
 		JSONObject submeta = new JSONObject();
-		submeta.put("type", "SP.ListItem");
+		if (jsonMetadata.has("type")) {
+			submeta.put("type", jsonMetadata.get("type"));
+		} else {
+			submeta.put("type", "SP.ListItem");
+		}
 		jsonMetadata.put("__metadata", submeta);
 		
 	    headers = headerHelper.getPostHeaders("");
@@ -408,7 +412,11 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	@Override
 	public JSONObject updateFileMetadata(String fileServerRelatUrl, JSONObject jsonMetadata) throws Exception {
 		JSONObject meta = new JSONObject();
-		meta.put("type", "SP.Folder");
+		if (jsonMetadata.has("type")) {
+			meta.put("type", jsonMetadata.get("type"));
+		} else {
+			meta.put("type", "SP.File");
+		}
 		jsonMetadata.put("__metadata", meta);
 	    LOG.debug("File uploaded to URI", fileServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
@@ -434,7 +442,11 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	@Override
 	public JSONObject updateFolderMetadata(String folderServerRelatUrl, JSONObject jsonMetadata) throws Exception {
 		JSONObject meta = new JSONObject();
-		meta.put("type", "SP.Folder");
+		if (jsonMetadata.has("type")) {
+			meta.put("type", jsonMetadata.get("type"));
+		} else {
+			meta.put("type", "SP.Folder");
+		}
 		jsonMetadata.put("__metadata", meta);
 	    LOG.debug("File uploaded to URI", folderServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
@@ -483,7 +495,11 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			payload = new JSONObject();
 		}
 		JSONObject meta = new JSONObject();
-		meta.put("type", "SP.Folder");
+		if (payload.has("type")) {
+			meta.put("type", payload.get("type"));
+		} else {
+			meta.put("type", "SP.Folder");
+		}
 		payload.put("__metadata", meta);
 		payload.put("ServerRelativeUrl", baseFolderRemoteRelativeUrl + "/" + folder);
 		String payloadStr = payload.toString();
