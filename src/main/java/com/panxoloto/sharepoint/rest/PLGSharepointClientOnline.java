@@ -770,4 +770,9 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    return Boolean.TRUE;
 	}
 
+	public final ChunkFileUploader createChunkFileUploader()
+	{
+		return new ChunkFileUploader(this.tokenHelper);
+	}
+	
 }
