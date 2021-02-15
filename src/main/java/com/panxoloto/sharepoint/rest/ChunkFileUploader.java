@@ -24,7 +24,7 @@ import com.panxoloto.sharepoint.rest.helper.HeadersHelper;
 public class ChunkFileUploader
 	extends Object
 {
-	private final static Logger            log		= LoggerFactory.getLogger(PLGSharepointClientOnline.class);
+	private final static Logger            log		= LoggerFactory.getLogger(ChunkFileUploader.class);
 	private final static ByteArrayResource empty	= new ChunkResource(new byte[] {});
 	
 	private final HeadersHelper			headerHelper;
@@ -99,28 +99,39 @@ public class ChunkFileUploader
 			
 		final String id = UUID.randomUUID().toString();
 		final String pathToTargetFile = folder + "/" + filename;
+
 		this.createNewEmptyFile(folder, filename);
 		log.debug("empty file {} has been created in folder {}", filename, folder);
-
-		long offset = 0L;
-		final byte[] buffer = new byte[size];
-		try ( final InputStream is = resource.getInputStream() )
+		
+		try
 		{
-			for ( int readBytes=is.read(buffer); readBytes!=-1; readBytes = is.read(buffer) )
+			long offset = 0L;
+			final byte[] buffer = new byte[size];
+			try ( final InputStream is = resource.getInputStream() )
 			{
-				log.debug("offset [" + offset + "] got [" + readBytes + "] bytes");
-				final ChunkResource chunkResource = new ChunkResource(filename, buffer, readBytes); 
-				if ( offset==0 )
+				for ( int readBytes=is.read(buffer); readBytes!=-1; readBytes = is.read(buffer) )
 				{
-					offset = this.startFileUpload(id, pathToTargetFile, chunkResource);
-				}
-				else
-				{
-					offset = this.continueFileUpload(id, pathToTargetFile, offset, chunkResource);
+					log.debug("offset [" + offset + "] got [" + readBytes + "] bytes");
+					//System.out.println("offset [" + offset + "] got [" + readBytes + "] bytes");
+					final ChunkResource chunkResource = new ChunkResource(filename, buffer, readBytes); 
+					if ( offset==0 )
+					{
+						offset = this.startFileUpload(id, pathToTargetFile, chunkResource);
+					}
+					else
+					{
+						offset = this.continueFileUpload(id, pathToTargetFile, offset, chunkResource);
+					}
 				}
 			}
+			return this.finishFileUpload(id, pathToTargetFile, offset, empty);
 		}
-		return this.finishFileUpload(id, pathToTargetFile, offset, empty);
+		catch( final Exception uploadExc )
+		{
+			log.error("Chunked upload has failed", uploadExc);
+			this.cancelFileUploadSilently(id, pathToTargetFile);
+			throw uploadExc;
+		}
 	}
 	
 	protected final JSONObject createNewEmptyFile( final String folder, final String newFileName )
