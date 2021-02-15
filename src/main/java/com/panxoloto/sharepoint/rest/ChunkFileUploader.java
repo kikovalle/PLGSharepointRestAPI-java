@@ -77,6 +77,19 @@ public class ChunkFileUploader
 		final String response = this.execute(uri, resource);
 	    return new JSONObject(response);
 	}
+
+	protected void cancelFileUploadSilently( final String uploadId, final String pathToTargetFile )
+	{		
+		try
+		{
+		    final String uri = "/_api/web/getFileByServerRelativeUrl('" + pathToTargetFile + "')/cancelupload(uploadId=guid'" + uploadId + "')";
+			this.execute(uri, null);
+		}
+		catch( final Exception e )
+		{
+			log.error("Could not cancel chunkedUpload", e );
+		}
+	}
 	
 	public JSONObject uploadFile( final String folder, final Resource resource, final int size ) 
 		throws Exception 
