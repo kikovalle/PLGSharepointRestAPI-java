@@ -83,20 +83,14 @@ public class AuthTokenHelperOnline {
 	}
 	
 	
-	protected String receiveSecurityToken() throws URISyntaxException {
+	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException {
 		RequestEntity<String> requestEntity = 
 	        new RequestEntity<>(this.payload, 
 	        HttpMethod.POST, 
 	        new URI(TOKEN_LOGIN_URL));
 
 	    ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		String securityToken = responseEntity.getBody();
-		String clave1 = "<wsse:BinarySecurityToken";
-		String clave2 = "</wsse:BinarySecurityToken>";
-		securityToken = securityToken.substring(securityToken.indexOf(clave1));
-		securityToken = securityToken.substring(securityToken.indexOf(">") + 1);
-		securityToken = securityToken.substring(0, securityToken.indexOf(clave2));
-		return securityToken;
+		return AuthenticationResponseParser.parseAuthenticationResponse(responseEntity.getBody());
 	}
 
 	protected List<String> getSignInCookies(String securityToken)
