@@ -38,7 +38,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	 * @param spSiteUrl - The sharepoint site URI like /sites/contososite
 	 */
 	public PLGSharepointClientOnline(String user, 
-			String passwd, String domain, String spSiteUrl) {
+			String passwd, String domain, String spSiteUrl) throws Exception {
 		super();
 		this.restTemplate = new RestTemplate();
 		this.spSiteUrl = spSiteUrl;
@@ -51,13 +51,8 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			this.spSiteUrl = String.format("%s%s", "/", this.spSiteUrl);
 		}
 		this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl);
-		try {
-			LOG.debug("Wrapper auth initialization performed successfully. Now you can perform actions on the site.");
-			this.tokenHelper.init();
-			this.headerHelper = new HeadersHelper(this.tokenHelper);
-		} catch (Exception e) {
-			LOG.error("Initialization failed!! Please check the user, pass, domain and spSiteUri parameters you provided", e);
-		}
+		this.tokenHelper.init();
+		this.headerHelper = new HeadersHelper(this.tokenHelper);
 	}
 
 	/**
