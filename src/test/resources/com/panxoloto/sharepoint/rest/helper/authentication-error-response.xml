@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<S:Envelope xmlns:wsa="http://www.w3.org/2005/08/addressing" 
+						xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" 
+						xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" 
+						xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" 
+						xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust" 
+						xmlns:S="http://www.w3.org/2003/05/soap-envelope">
+<S:Header>
+	<psf:pp xmlns:psf="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault">
+		<psf:serverVersion>1</psf:serverVersion>
+		<psf:authstate>0x80048800</psf:authstate>
+		<psf:reqstatus>0x80048821</psf:reqstatus>
+		<psf:serverInfo ServerTime="2021-03-05T11:28:03.2156309Z">ESTS-PUB-WEULR2-AZ1-FD059-001.ProdSlices rid:033f82dd-cae8-43e1-bd95-d3921cf31400</psf:serverInfo>
+	</psf:pp>
+	</S:Header>
+		<S:Body xmlns:S="http://www.w3.org/2003/05/soap-envelope">
+			<S:Fault>
+				<S:Code>
+					<S:Value>S:Sender</S:Value>
+					<S:Subcode><S:Value>wst:FailedAuthentication</S:Value></S:Subcode>
+				</S:Code>
+				<S:Reason>
+					<S:Text xml:lang="en-US">Authentication Failure</S:Text>
+				</S:Reason>
+				<S:Detail>
+					<psf:error xmlns:psf="http://schemas.microsoft.com/Passport/SoapServices/SOAPFault">
+						<psf:value>0x80048821</psf:value>
+						<psf:internalerror>
+							<psf:code>0x80048821</psf:code>
+							<psf:text>AADSTS50126: Error validating credentials due to invalid username or password.</psf:text>
+						</psf:internalerror>
+					</psf:error>
+				</S:Detail>
+			</S:Fault>
+	</S:Body>
+</S:Envelope>
