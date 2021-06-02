@@ -401,6 +401,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    return downloadFileWithReponse(fileServerRelativeUrl).getBody();
 	}
 
+	@Override
 	public ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception {
 		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
 

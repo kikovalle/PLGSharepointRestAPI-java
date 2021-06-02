@@ -1,6 +1,11 @@
 # Change Log
 Changelog registry
 
+## 2021-06-02
+### Added
+- Allow using cloud logging with clientID/clientSecret
+- download file as stream from SP-online
+
 ## 2021-02-03
 ### Added
 - Allow custom metadata type in folder and file creation.

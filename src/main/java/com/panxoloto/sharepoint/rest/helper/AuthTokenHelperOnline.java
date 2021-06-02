@@ -3,6 +3,7 @@ package com.panxoloto.sharepoint.rest.helper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,8 +61,16 @@ public class AuthTokenHelperOnline {
 			+ "    </t:RequestSecurityToken>\n" 
 			+ "  </s:Body>\n" 
 			+ "</s:Envelope>";
-	
+
 	private RestTemplate restTemplate;
+	private String user; // clientID when useClientId is true
+	private String passwd; // clientSecret when useClientId is true
+	private boolean useClientId;
+	private CloudTokenForClientIdGetter cloudTokenGetter = null;
+
+	public boolean isUseClientId() {
+		return useClientId;
+	}
 
 	/**
 	 * Helper class to manage login against SharepointOnline and retrieve auth token and cookies to
@@ -79,22 +88,59 @@ public class AuthTokenHelperOnline {
 		this.restTemplate = restTemplate;
 		this.domain = domain;
 		this.spSiteUri = spSiteUri;
-		this.payload = String.format(this.payload, user, passwd, domain);
+		this.user = user;
+		this.passwd = passwd;
+		this.useClientId = false;
 	}
-	
-	
-	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException {
-		RequestEntity<String> requestEntity = 
-	        new RequestEntity<>(this.payload, 
-	        HttpMethod.POST, 
-	        new URI(TOKEN_LOGIN_URL));
 
-	    ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+	public AuthTokenHelperOnline(boolean useClientId, RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUrl) {
+		super();
+		this.restTemplate = restTemplate;
+		this.domain = domain;
+		this.spSiteUri = spSiteUrl;
+		this.user = user;  // clientID when useClientId is true
+		this.passwd = passwd; // clientSecret when useClientId is true
+		this.useClientId = useClientId;
+	}
+
+	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException {
+		if (useClientId) {
+			return getSecurityTokenUsingClientId();
+		} else {
+			return getSecurityTokenUsingUserName();
+		}
+	}
+
+	protected String getSecurityTokenUsingClientId() {
+		if (cloudTokenGetter == null) {
+			try {
+				cloudTokenGetter = new CloudTokenForClientIdGetter(user, passwd, getSharepointSiteUrl("").toString());
+			} catch (URISyntaxException e) {
+				throw new RuntimeException("can't get security token", e);
+			}
+		}
+		return cloudTokenGetter.getToken();
+	}
+
+	protected String getSecurityTokenUsingUserName() throws URISyntaxException, AuthenticationException {
+		String payload = String.format(this.payload, user, passwd, domain);
+		RequestEntity<String> requestEntity =
+				new RequestEntity<>(payload,
+									HttpMethod.POST,
+									new URI(TOKEN_LOGIN_URL));
+
+		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
 		return AuthenticationResponseParser.parseAuthenticationResponse(responseEntity.getBody());
 	}
 
+
+
 	protected List<String> getSignInCookies(String securityToken)
 			throws TransformerException, URISyntaxException, Exception {
+		if (useClientId) {
+			return new ArrayList<>();
+		}
+
 		RequestEntity<String> requestEntity = new RequestEntity<>(securityToken, HttpMethod.POST,
 				new URI(String.format("https://%s/_forms/default.aspx?wa=wsignin1.0", this.domain)));
 
@@ -110,6 +156,9 @@ public class AuthTokenHelperOnline {
 
 	protected String getFormDigestValue(List<String> cookies)
 			throws IOException, URISyntaxException, TransformerException, JSONException {
+		if (useClientId) {
+			return cloudTokenGetter.getToken();
+		}
 
 		headers = new LinkedMultiValueMap<>();
 		headers.add("Cookie",  cookies.stream().collect(Collectors.joining(";")) );
@@ -143,6 +192,11 @@ public class AuthTokenHelperOnline {
 	 * @return
 	 */
 	public String getFormDigestValue() {
+		if (useClientId) {
+			return cloudTokenGetter.getToken();
+		}
+
+
 		return formDigestValue;
 	}
 

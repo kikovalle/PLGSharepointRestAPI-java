@@ -3,7 +3,9 @@ package com.panxoloto.sharepoint.rest;
 import java.util.List;
 
 import org.json.JSONObject;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 
 import com.panxoloto.sharepoint.rest.helper.Permission;
 
@@ -112,8 +114,16 @@ public interface PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
-	Resource downloadFile(String fileServerRelativeUrl) throws Exception;
+	InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception;
 
+	/**
+	 * @param fileServerRelativeUrl
+	 * @return
+	 * @throws Exception
+	 */
+	ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception;
+
+	
 	/**
 	 * @param folder
 	 * @param resource
