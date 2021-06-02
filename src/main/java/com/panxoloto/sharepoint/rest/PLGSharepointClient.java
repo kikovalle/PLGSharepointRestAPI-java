@@ -17,7 +17,7 @@ public interface PLGSharepointClient {
 	 * Method to get json string wich you can transform to a JSONObject and get data from it.
 	 * 
 	 * 
-	 * @param data.- Data to be sent as query (look at the rest api documentation on how to include search filters).
+	 * @param data - Data to be sent as query (look at the rest api documentation on how to include search filters).
 	 * @return.- String representing a json object if the auth is correct.
 	 * @throws Exception
 	 */
@@ -26,8 +26,8 @@ public interface PLGSharepointClient {
 	/**
 	 * Retrieves list info by list title.
 	 * 
-	 * @param title.- Site list title to query info.
-	 * @param jsonExtendedAttrs.- form json body for advanced query (take a look at ms documentation about rest api).
+	 * @param title - Site list title to query info.
+	 * @param jsonExtendedAttrs - form json body for advanced query (take a look at ms documentation about rest api).
 	 * @return json string with list information that can be used to get a JSONObject to use this info.
 	 * @throws Exception thrown when something went wrong.
 	 */
@@ -36,8 +36,7 @@ public interface PLGSharepointClient {
 	/**
 	 * Retrieves list info by list title.
 	 * 
-	 * @param title.- Site list title to query info.
-	 * @param jsonExtendedAttrs.- form json body for advanced query (take a look at ms documentation about rest api).
+	 * @param title - Site list title to query info.
 	 * @return json string with list information that can be used to get a JSONObject to use this info.
 	 * @throws Exception thrown when something went wrong.
 	 */
@@ -47,8 +46,8 @@ public interface PLGSharepointClient {
 	
 	
 	/**
-	 * @param baseFolderRemoteRelativeUrl
-	 * @param folder
+	 * @param listTitle
+	 * @param description
 	 * @return
 	 * @throws Exception
 	 */
@@ -82,7 +81,22 @@ public interface PLGSharepointClient {
 	 * @throws Exception thrown when something went wrong.
 	 */
 	JSONObject getFolderByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
-	
+
+	/**
+	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
+	 * @param jsonExtendedAttrs extended body for the query.
+	 * @return json string representing list of folders.
+	 * @throws Exception thrown when something went wrong.
+	 */
+	JSONObject getFolderFoldersByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
+
+	/**
+	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
+	 * @param jsonExtendedAttrs extended body for the query.
+	 * @return json string representing list of files.
+	 * @throws Exception thrown when something went wrong.
+	 */
+	JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
 
 	/**
 	 * @param fileServerRelativeUrl
@@ -91,8 +105,8 @@ public interface PLGSharepointClient {
 	 */
 	Boolean deleteFile(String fileServerRelativeUrl) throws Exception;
 
-	
-	
+	JSONObject getFileInfo(String fileServerRelativeUrl) throws Exception;
+
 	/**
 	 * @param fileServerRelativeUrl
 	 * @return
@@ -109,6 +123,16 @@ public interface PLGSharepointClient {
 	 */
 	JSONObject uploadFile(String folder, Resource resource, JSONObject jsonMetadata) throws Exception;
 
+	/**
+	 * @param folder
+	 * @param resource
+	 * @param fileName
+	 * @param jsonMetadata
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject uploadFile(String folder, Resource resource, String fileName, JSONObject jsonMetadata) throws Exception;
+	
 	/**
 	 * @param fileServerRelatUrl
 	 * @param jsonMetadata
@@ -176,8 +200,6 @@ public interface PLGSharepointClient {
 	
 	/**
 	 * @param folder
-	 * @param users
-	 * @param permission
 	 * @return
 	 * @throws Exception
 	 */
@@ -185,7 +207,6 @@ public interface PLGSharepointClient {
 	
 	/**
 	 * @param folder
-	 * @param users
 	 * @param permission
 	 * @return
 	 * @throws Exception
@@ -201,4 +222,11 @@ public interface PLGSharepointClient {
 	 * @throws Exception
 	 */
 	Boolean removePermissionToUsers(String folder, List<String> users, Permission permission) throws Exception;
+
+	/**
+	 * @param folderServerRelativeUrl
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception;
 }

@@ -11,6 +11,7 @@ public class AuthTokenHelperOnPremises {
 	private static final Logger LOG = LoggerFactory.getLogger(AuthTokenHelperOnPremises.class);
 	private String spDomain;
 	private String spSitePrefix;
+	private HttpProtocols protocol = HttpProtocols.HTTPS;
 
 	/**
 	 * Helper class to manage login against SharepointOnline and retrieve auth token and cookies to
@@ -25,7 +26,19 @@ public class AuthTokenHelperOnPremises {
 		this.spDomain = spDomain;
 		this.spSitePrefix = spSitePrefix;
 	}
-	
+
+	public void setProtocol(HttpProtocols protocol) {
+		this.protocol = protocol;
+	}
+
+	public HttpProtocols getProtocol() {
+		return protocol;
+	}
+
+	private String getProtocolString() {
+		return protocol == HttpProtocols.HTTPS ? "https" : "http";
+	}
+
 	/**
 	 * Mounts the sharepoint online site url, composed by the protocol, domain and spSiteUri.
 	 * 
@@ -33,7 +46,7 @@ public class AuthTokenHelperOnPremises {
 	 * @throws URISyntaxException 
 	 */
 	public URI getSharepointSiteUrl(String apiPath) throws URISyntaxException {
-		return new URI("https",
+		return new URI(getProtocolString(),
 				this.spDomain,
 				this.spSitePrefix +  apiPath,
 				null
@@ -51,7 +64,7 @@ public class AuthTokenHelperOnPremises {
 			LOG.debug("Missing $filter in query string, adding");
 			query = String.format("%s%s", "$filter=", query);
 		}
-		return new URI("https",
+		return new URI(getProtocolString(),
 				this.spDomain,
 				this.spSitePrefix + apiPath,
 				query,

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<S:Envelope xmlns:wsa="http://www.w3.org/2005/08/addressing" 
+            xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" 
+            xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" 
+            xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" 
+            xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust" 
+            xmlns:S="http://www.w3.org/2003/05/soap-envelope">
+<S:Header>
+	<wsa:Action S:mustUnderstand="1" wsu:Id="Action">http://schemas.xmlsoap.org/ws/2005/02/trust/RSTR/Issue</wsa:Action>
+	<wsa:To S:mustUnderstand="1" wsu:Id="To">http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</wsa:To>
+	<wsse:Security S:mustUnderstand="1">
+		<wsu:Timestamp wsu:Id="TS" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+			<wsu:Created>2021-03-05T11:37:27.7367086Z</wsu:Created>
+			<wsu:Expires>2021-03-05T11:42:27.7367086Z</wsu:Expires>
+		</wsu:Timestamp>
+	</wsse:Security>
+</S:Header>
+<S:Body xmlns:S="http://www.w3.org/2003/05/soap-envelope">
+	<wst:RequestSecurityTokenResponse xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" 
+	                                  xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" 
+	                                  xmlns:wst="http://schemas.xmlsoap.org/ws/2005/02/trust"
+	>
+		<wst:TokenType>urn:passport:compact</wst:TokenType>
+		<wsp:AppliesTo>
+			<wsa:EndpointReference xmlns:wsa="http://www.w3.org/2005/08/addressing">
+				<wsa:Address>rtlde.sharepoint.com</wsa:Address>
+			</wsa:EndpointReference>
+		</wsp:AppliesTo>
+		<wst:Lifetime>
+			<wsu:Created>2021-03-05T11:37:27Z</wsu:Created>
+			<wsu:Expires>2021-03-06T11:37:27Z</wsu:Expires>
+		</wst:Lifetime>
+		<wst:RequestedSecurityToken>
+			<wsse:BinarySecurityToken Id="Compact0" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">t=TOKENp=</wsse:BinarySecurityToken>
+		</wst:RequestedSecurityToken>
+				
+				<wst:RequestedAttachedReference>
+					<wsse:SecurityTokenReference xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+						<wsse:Reference URI="sVHsxUuWKJY/r868iY29Z2dqBZU="></wsse:Reference>
+					</wsse:SecurityTokenReference>
+				</wst:RequestedAttachedReference>
+				
+				<wst:RequestedUnattachedReference>
+					<wsse:SecurityTokenReference xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+						<wsse:Reference URI="sVHsxUuWKJY/r868iY29Z2dqBZU="></wsse:Reference>
+					</wsse:SecurityTokenReference>
+				</wst:RequestedUnattachedReference>
+				
+				
+	</wst:RequestSecurityTokenResponse>
+</S:Body>
+</S:Envelope>

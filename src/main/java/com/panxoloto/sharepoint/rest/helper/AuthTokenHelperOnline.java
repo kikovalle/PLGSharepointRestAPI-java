@@ -42,8 +42,8 @@ public class AuthTokenHelperOnline {
 			+ "    <o:Security s:mustUnderstand=\"1\"\n"
 			+ "       xmlns:o=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n"
 			+ "      <o:UsernameToken>\n" 
-			+ "        <o:Username>%s</o:Username>\n"
-			+ "        <o:Password>%s</o:Password>\n" 
+			+ "        <o:Username><![CDATA[%s]]></o:Username>\n"
+			+ "        <o:Password><![CDATA[%s]]></o:Password>\n" 
 			+ "      </o:UsernameToken>\n" 
 			+ "    </o:Security>\n"
 			+ "  </s:Header>\n" 
@@ -83,20 +83,14 @@ public class AuthTokenHelperOnline {
 	}
 	
 	
-	protected String receiveSecurityToken() throws URISyntaxException {
+	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException {
 		RequestEntity<String> requestEntity = 
 	        new RequestEntity<>(this.payload, 
 	        HttpMethod.POST, 
 	        new URI(TOKEN_LOGIN_URL));
 
 	    ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		String securityToken = responseEntity.getBody();
-		String clave1 = "<wsse:BinarySecurityToken";
-		String clave2 = "</wsse:BinarySecurityToken>";
-		securityToken = securityToken.substring(securityToken.indexOf(clave1));
-		securityToken = securityToken.substring(securityToken.indexOf(">") + 1);
-		securityToken = securityToken.substring(0, securityToken.indexOf(clave2));
-		return securityToken;
+		return AuthenticationResponseParser.parseAuthenticationResponse(responseEntity.getBody());
 	}
 
 	protected List<String> getSignInCookies(String securityToken)
