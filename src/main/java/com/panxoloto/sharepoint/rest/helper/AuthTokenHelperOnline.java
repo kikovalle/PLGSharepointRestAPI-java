@@ -66,7 +66,7 @@ public class AuthTokenHelperOnline {
 	private String user; // clientID when useClientId is true
 	private String passwd; // clientSecret when useClientId is true
 	private boolean useClientId;
-	private CloudTokenGetter cloudTokenGetter = null;
+	private CloudTokenForClientIdGetter cloudTokenGetter = null;
 
 	public boolean isUseClientId() {
 		return useClientId;
@@ -107,14 +107,14 @@ public class AuthTokenHelperOnline {
 		if (useClientId) {
 			return getSecurityTokenUsingClientId();
 		} else {
-			return getSecurityTokenNonClientId();
+			return getSecurityTokenUsingUserName();
 		}
 	}
 
-	private String getSecurityTokenUsingClientId() {
+	protected String getSecurityTokenUsingClientId() {
 		if (cloudTokenGetter == null) {
 			try {
-				cloudTokenGetter = new CloudTokenGetter(user, passwd, getSharepointSiteUrl("").toString());
+				cloudTokenGetter = new CloudTokenForClientIdGetter(user, passwd, getSharepointSiteUrl("").toString());
 			} catch (URISyntaxException e) {
 				throw new RuntimeException("can't get security token", e);
 			}
@@ -122,7 +122,7 @@ public class AuthTokenHelperOnline {
 		return cloudTokenGetter.getToken();
 	}
 
-	protected String getSecurityTokenNonClientId() throws URISyntaxException, AuthenticationException {
+	protected String getSecurityTokenUsingUserName() throws URISyntaxException, AuthenticationException {
 		String payload = String.format(this.payload, user, passwd, domain);
 		RequestEntity<String> requestEntity =
 				new RequestEntity<>(payload,

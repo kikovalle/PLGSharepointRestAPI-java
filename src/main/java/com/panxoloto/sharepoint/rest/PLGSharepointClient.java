@@ -114,7 +114,13 @@ public interface PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
-	Resource downloadFile(String fileServerRelativeUrl) throws Exception;
+	InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception;
+
+	/**
+	 * @param fileServerRelativeUrl
+	 * @return
+	 * @throws Exception
+	 */
 	ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception;
 
 	

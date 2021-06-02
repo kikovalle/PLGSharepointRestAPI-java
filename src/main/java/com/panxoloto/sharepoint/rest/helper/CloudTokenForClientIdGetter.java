@@ -28,7 +28,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 
-public class CloudTokenGetter {
+public class CloudTokenForClientIdGetter {
 
 	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
@@ -36,7 +36,7 @@ public class CloudTokenGetter {
 	private String clientSecret;
 	private String siteURL;
 
-	public CloudTokenGetter(String clientId, String clientSecret, String siteURL) {
+	public CloudTokenForClientIdGetter(String clientId, String clientSecret, String siteURL) {
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
 		this.siteURL = siteURL;
