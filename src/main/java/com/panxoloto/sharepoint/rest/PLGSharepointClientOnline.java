@@ -3,14 +3,18 @@ package com.panxoloto.sharepoint.rest;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,7 +44,12 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	public PLGSharepointClientOnline(String user, 
 			String passwd, String domain, String spSiteUrl) throws Exception {
 		super();
-		this.restTemplate = new RestTemplate();
+
+		CloseableHttpClient httpClient = HttpClients.custom().build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setHttpClient(httpClient);
+		this.restTemplate = new StreamRestTemplate(requestFactory);
+
 		this.spSiteUrl = spSiteUrl;
 		if (this.spSiteUrl.endsWith("/")) {
 			LOG.debug("spSiteUri ends with /, removing character");
@@ -51,6 +60,32 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			this.spSiteUrl = String.format("%s%s", "/", this.spSiteUrl);
 		}
 		this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl);
+		this.tokenHelper.init();
+		this.headerHelper = new HeadersHelper(this.tokenHelper);
+	}
+
+	public PLGSharepointClientOnline(String user, String passwd, String domain, String site, boolean useClienId) throws Exception {
+		super();
+
+		CloseableHttpClient httpClient = HttpClients.custom().build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setHttpClient(httpClient);
+		this.restTemplate = new StreamRestTemplate(requestFactory);
+
+		this.spSiteUrl = site;
+		if (this.spSiteUrl.endsWith("/")) {
+			LOG.debug("spSiteUri ends with /, removing character");
+			this.spSiteUrl = this.spSiteUrl.substring(0, this.spSiteUrl.length() - 1);
+		}
+		if (!this.spSiteUrl.startsWith("/")) {
+			LOG.debug("spSiteUri doesnt start with /, adding character");
+			this.spSiteUrl = String.format("%s%s", "/", this.spSiteUrl);
+		}
+		if (useClienId) {
+			this.tokenHelper = new AuthTokenHelperOnline(true, this.restTemplate, user, passwd, domain, spSiteUrl);
+		} else {
+			this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl);
+		}
 		this.tokenHelper.init();
 		this.headerHelper = new HeadersHelper(this.tokenHelper);
 	}
@@ -358,6 +393,22 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    ResponseEntity<Resource> response = restTemplate.exchange(requestEntity, Resource.class);
 	    return response.getBody();
 	}
+
+	@Override
+	public ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception {
+		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
+
+		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>("",
+																  headers, HttpMethod.GET,
+																  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
+		);
+
+		ResponseEntity<InputStreamResource> response = restTemplate.exchange(requestEntity, InputStreamResource.class);
+		return response;
+	}
+
 
 	/**
 	 * @param folder

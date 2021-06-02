@@ -20,7 +20,7 @@ public class HeadersHelper {
 		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
 		headers.add("Accept", "application/json;odata=verbose");
 		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    if (includeAuthHeader) {
+	    if (includeAuthHeader || tokenHelper.isUseClientId()) {
 	    	headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
 	    } else {
 	    	headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
