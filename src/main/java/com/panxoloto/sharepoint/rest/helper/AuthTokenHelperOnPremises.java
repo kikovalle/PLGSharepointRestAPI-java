@@ -60,10 +60,6 @@ public class AuthTokenHelperOnPremises {
 	 * @throws URISyntaxException
 	 */
 	public URI getSharepointSiteUrl(String apiPath, String query) throws URISyntaxException {
-		if (!query.startsWith("$filter=")) {
-			LOG.debug("Missing $filter in query string, adding");
-			query = String.format("%s%s", "$filter=", query);
-		}
 		return new URI(getProtocolString(),
 				this.spDomain,
 				this.spSitePrefix + apiPath,

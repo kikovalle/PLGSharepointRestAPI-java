@@ -271,7 +271,12 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
 		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
 
-	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
+		if (!filter.startsWith("$filter=")) {
+			LOG.debug("Missing $filter in filter string, adding");
+			filter = String.format("%s%s", "$filter=", filter);
+		}
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 	        headers, HttpMethod.GET, 
 	        this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items", filter)
 	        );
@@ -409,7 +414,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 		RequestEntity<String> requestEntity = new RequestEntity<>("",
 			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value", "binaryStringResponseBody=true")
 		);
 
 		ResponseEntity<InputStreamResource> response = restTemplate.exchange(requestEntity, InputStreamResource.class);
