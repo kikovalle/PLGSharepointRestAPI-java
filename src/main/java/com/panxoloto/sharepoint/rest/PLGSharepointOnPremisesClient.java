@@ -271,7 +271,12 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
 		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
 
-	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
+		if (!filter.startsWith("$filter=")) {
+			LOG.debug("Missing $filter in filter string, adding");
+			filter = String.format("%s%s", "$filter=", filter);
+		}
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 	        headers, HttpMethod.GET, 
 	        this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items", filter)
 	        );
@@ -304,6 +309,36 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    return new JSONObject(responseEntity.getBody());
 	}
 
+	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs, String query) throws Exception {
+		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {} query {}", new Object[] {folder, jsonExtendedAttrs, query});
+		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
+				headers, HttpMethod.GET,
+				this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/Files", query)
+		);
+
+		ResponseEntity<String> responseEntity =
+				restTemplate.exchange(requestEntity, String.class);
+
+		return new JSONObject(responseEntity.getBody());
+	}
+
+	/**
+	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
+	 * @param jsonExtendedAttrs extended body for the query.
+	 * @return json string representing list of files
+	 * @throws Exception thrown when something went wrong.
+	 */
+	@Override
+	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
+		return getFolderFilesByRelativeUrl(folder, jsonExtendedAttrs, null);
+	}
+
+	@Override
+	public JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception {
+		return getFolderFilesByRelativeUrl(folderServerRelativeUrl, "{}");
+	}
 
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
@@ -319,29 +354,6 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 			  headers, HttpMethod.GET,
 			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/Folders")
-		);
-
-		ResponseEntity<String> responseEntity =
-				restTemplate.exchange(requestEntity, String.class);
-
-		return new JSONObject(responseEntity.getBody());
-	}
-
-
-	/**
-	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
-	 * @param jsonExtendedAttrs extended body for the query.
-	 * @return json string representing list of files
-	 * @throws Exception thrown when something went wrong.
-	 */
-	@Override
-	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
-		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
-		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
-
-		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
-			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/Files")
 		);
 
 		ResponseEntity<String> responseEntity =
@@ -409,7 +421,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 		RequestEntity<String> requestEntity = new RequestEntity<>("",
 			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value", "binaryStringResponseBody=true")
 		);
 
 		ResponseEntity<InputStreamResource> response = restTemplate.exchange(requestEntity, InputStreamResource.class);
@@ -828,22 +840,4 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public void refreshToken() throws Exception {
 		LOG.debug("Nothing to do here as we are using a credentials provider on the rest template");
 	}
-
-	@Override
-	public JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception {
-		LOG.debug("getFolderFilesByRelativeUrl {} ", new Object[] {folderServerRelativeUrl});
-		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
-
-		RequestEntity<String> requestEntity = new RequestEntity<>("{}",
-			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folderServerRelativeUrl + "')/Files")
-		);
-
-		ResponseEntity<String> responseEntity =
-				restTemplate.exchange(requestEntity, String.class);
-
-		return new JSONObject(responseEntity.getBody());
-	}
-	
-
 }

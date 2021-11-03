@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -160,6 +161,10 @@ public class StreamRestTemplate extends RestTemplate {
 			}
 			DeferredCloseClientHttpResponse deferredCloseClientHttpResponse = (DeferredCloseClientHttpResponse) response;
 			deferredCloseClientHttpResponse.setStream(isStream);
+			// workaround to allow for retrieving contents from Sharepoint which is returned with Content-Type: application
+			if(response.getHeaders().containsKey("Content-Type") &&
+					response.getHeaders().get("Content-Type").equals(Collections.singletonList("application")))
+				response.getHeaders().put("Content-Type", Collections.singletonList("application/octet-stream"));
 			return delegate.extractData(response);
 		}
 	}
