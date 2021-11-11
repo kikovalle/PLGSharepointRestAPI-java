@@ -406,7 +406,9 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		jsonMetadata.put("__metadata", submeta);
 		
 	    headers = headerHelper.getPostHeaders("");
-	    headers.remove("Content-Length");
+	    headers.remove("Content-length");
+	    headers.remove("Content-Type");
+	    headers.add("Content-Type", "multipart/form-data");
 
 	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
 	        headers, HttpMethod.POST, 
@@ -426,7 +428,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    JSONObject jsonFileInfo = new JSONObject(fileInfoStr);
 	    String serverRelFileUrl = jsonFileInfo.getJSONObject("d").getString("ServerRelativeUrl");
 
-	    LOG.debug("File uploaded to URI", serverRelFileUrl);
+	    LOG.debug("File uploaded to URI {}", serverRelFileUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
 
@@ -457,7 +459,9 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		jsonMetadata.put("__metadata", submeta);
 		
 	    headers = headerHelper.getPostHeaders("");
-	    headers.remove("Content-Length");
+	    headers.remove("Content-length");
+	    headers.remove("Content-Type");
+	    headers.add("Content-Type", "multipart/form-data");
 
 	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
 	        headers, HttpMethod.POST, 
@@ -477,7 +481,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    JSONObject jsonFileInfo = new JSONObject(fileInfoStr);
 	    String serverRelFileUrl = jsonFileInfo.getJSONObject("d").getString("ServerRelativeUrl");
 
-	    LOG.debug("File uploaded to URI", serverRelFileUrl);
+	    LOG.debug("File uploaded to URI {}", serverRelFileUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
 
@@ -508,7 +512,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			meta.put("type", "SP.File");
 		}
 		jsonMetadata.put("__metadata", meta);
-	    LOG.debug("File uploaded to URI", fileServerRelatUrl);
+	    LOG.debug("File uploaded to URI {}", fileServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
@@ -538,7 +542,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			meta.put("type", "SP.Folder");
 		}
 		jsonMetadata.put("__metadata", meta);
-	    LOG.debug("File uploaded to URI", folderServerRelatUrl);
+	    LOG.debug("File uploaded to URI {}", folderServerRelatUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
 	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
