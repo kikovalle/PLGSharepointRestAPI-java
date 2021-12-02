@@ -239,4 +239,14 @@ public interface PLGSharepointClient {
 	 * @throws Exception
 	 */
 	JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception;
+
+	/**
+	 * @param folder
+	 * @param resource
+	 * @param jsonMetadata
+	 * @param chunkFileSize
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize) throws Exception;
 }
