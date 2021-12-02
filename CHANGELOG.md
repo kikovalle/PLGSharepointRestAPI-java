@@ -1,6 +1,11 @@
 # Change Log
 Changelog registry
 
+
+## 2021-12-02
+### Added
+- Chunked file upload implementation for Sharepoint Online client for uploading big files.
+
 ## 2021-06-02
 ### Added
 - Allow using cloud logging with clientID/clientSecret

@@ -1,5 +1,6 @@
 package com.panxoloto.sharepoint.rest;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
@@ -387,6 +389,115 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	}
 
 
+	@Override
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int cnunkSize) throws Exception {
+		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
+		JSONObject submeta = new JSONObject();
+		if (jsonMetadata.has("type")) {
+			submeta.put("type", jsonMetadata.get("type"));
+		} else {
+			submeta.put("type", "SP.ListItem");
+		}
+		jsonMetadata.put("__metadata", submeta);
+		java.util.UUID uuid = java.util.UUID.randomUUID();
+		
+		Resource tmpRes = new ByteArrayResource(new byte[0]);
+		headers = headerHelper.getPostHeaders("");
+	    headers.remove("Content-Length");
+
+	    RequestEntity<Resource> requestEntityCreate = new RequestEntity<>(tmpRes, 
+	        headers, HttpMethod.POST, 
+	        this.tokenHelper.getSharepointSiteUrl(
+		    		"/_api/web/GetFolderByServerRelativeUrl('" + folder +"')/Files/add(url='"
+					+ resource.getFilename() + "',overwrite=true)"
+		    		)
+	        );
+
+	    ResponseEntity<String> tmpResponse = restTemplate.exchange(requestEntityCreate, String.class);
+	    String fileInfoStr = tmpResponse.getBody();
+	    
+	    LOG.debug("Empty file created for chunked file upload");
+	    
+	    JSONObject jsonFileInfo = new JSONObject(fileInfoStr);
+		String serverRelativeUrl = jsonFileInfo.getJSONObject("d").getString("ServerRelativeUrl");
+		
+		headers = headerHelper.getPostHeaders("");
+	    headers.remove("Content-Length");
+	    headers.remove("Content-length");
+	    headers.remove("Accept");
+	    headers.remove("Content-Type");
+	    headers.add("Content-Type", "application/octet-stream");
+	    headers.add("Accept", "application/json;odata=verbose");
+	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    byte[] bytes = new byte[cnunkSize];
+	    try (InputStream is = resource.getInputStream();) {
+	    	boolean firstChunk = true;
+	    	int totalLength = is.available();
+	    	int readed = 0;
+	    	while (is.read(bytes) != -1) {
+	    		readed += bytes.length;
+	    		headers.remove("Cmontent-Length");
+	    		if (firstChunk) {
+	    			headers.add("Content-Length", "" + bytes.length);
+	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes, 
+	    					headers, HttpMethod.POST, 
+	    					this.tokenHelper.getSharepointSiteUrl(
+	    							"_api/web/getfilebyserverrelativeurl('" + ( serverRelativeUrl) +"')/startupload(uploadId=guid'" + uuid.toString() + "')"
+	    							)
+	    					);
+	    			restTemplate.exchange(requestEntity, String.class);
+	    			LOG.debug("Uploaded {} of {} bytes, {} completed", new Object[] {
+	    					readed,
+	    					totalLength,
+	    					(readed * 1.0) / (totalLength * 1.0)
+	    			});
+	    			firstChunk = false;
+	    		} else if (readed < totalLength) {
+	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes, 
+	    					headers, HttpMethod.POST, 
+	    					this.tokenHelper.getSharepointSiteUrl(
+	    							"/_api/web/getfilebyserverrelativeurl('" + (serverRelativeUrl) +"')/continueupload(uploadId=guid'" + uuid.toString() 
+	    							+"',fileOffset=" 
+	    							+ (readed -bytes.length)
+	    							+ ")"
+	    							)
+	    					);
+	    			restTemplate.exchange(requestEntity, String.class);
+	    			LOG.debug("Uploaded {} of {} bytes, {} completed", new Object[] {
+	    					readed,
+	    					totalLength,
+	    					(readed * 1.0) / (totalLength * 1.0)
+	    			});
+	    		} else {
+	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes, 
+	    					headers, HttpMethod.POST, 
+	    					this.tokenHelper.getSharepointSiteUrl(
+	    							"/_api/web/getfilebyserverrelativeurl('" + (serverRelativeUrl) +"')/finishupload(uploadId=guid'" + uuid.toString() + "',fileOffset="
+	    									+ ( readed - bytes.length)
+	    									+")"
+	    							)
+	    					);
+	    			restTemplate.exchange(requestEntity, String.class);
+	    			LOG.debug("Chunked upload completed, next step is to update metadata");
+	    		}
+	    		
+	    	}
+	    }
+	    
+	    String metadata = jsonMetadata.toString();
+	    headers = headerHelper.getUpdateHeaders(metadata);
+	    LOG.debug("Updating file adding metadata {}", jsonMetadata);
+
+	    RequestEntity<String> requestEntity1 = new RequestEntity<>(metadata, 
+	        headers, HttpMethod.POST, 
+	        this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + serverRelativeUrl + "')/listitemallfields")
+	        );
+	    ResponseEntity<String> responseEntity1 = restTemplate.exchange(requestEntity1, String.class);
+	    
+	    return new JSONObject(responseEntity1.getBody());
+
+	}
+	
 	/**
 	 * @param folder
 	 * @param resource
@@ -477,7 +588,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    JSONObject jsonFileInfo = new JSONObject(fileInfoStr);
 	    String serverRelFileUrl = jsonFileInfo.getJSONObject("d").getString("ServerRelativeUrl");
 
-	    LOG.debug("File uploaded to URI", serverRelFileUrl);
+	    LOG.debug("File uploaded to URI {}", serverRelFileUrl);
 	    String metadata = jsonMetadata.toString();
 	    headers = headerHelper.getUpdateHeaders(metadata);
 

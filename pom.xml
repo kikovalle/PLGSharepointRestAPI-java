@@ -2,15 +2,81 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.panxoloto.sharepoint.rest</groupId>
+	<groupId>io.github.kikovalle.com.panxoloto.sharepoint.rest</groupId>
 	<artifactId>PLGSharepointRestAPI</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<name>PLGSharepointRestAPI-java</name>
 	<description>Sharepoint Rest API v1 easy to use java library for sharepoint online.</description>
+	<url>https://github.com/kikovalle/PLGSharepointRestAPI-java</url>
+
+	<scm>
+		<connection>scm:git:git://github.com/kikovalle/PLGSharepointRestAPI-java.git</connection>
+		<developerConnection>scm:git:ssh://github.com/kikovalle/PLGSharepointRestAPI-java.git</developerConnection>
+		<url>http://github.com/kikovalle/PLGSharepointRestAPI-java</url>
+	</scm>
+	
+ 
+	<licenses>
+		<license>
+			<name>GNU General Public License v3.0</name>
+			<url>https://raw.githubusercontent.com/kikovalle/PLGSharepointRestAPI-java/master/LICENSE</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Francisco Valle González</name>
+			<email>kikovalle@gmail.com</email>
+			<organization>Panxoliñas Loto S.L.</organization>
+			<organizationUrl>http://github.com/kikovalle</organizationUrl>
+		</developer>
+	</developers>
 
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+						</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
+			</plugin>
+			
+			<plugin>
+	            <groupId>org.sonatype.plugins</groupId>
+	            <artifactId>nexus-staging-maven-plugin</artifactId>
+	            <version>1.6.8</version>
+	            <extensions>true</extensions>
+	            <configuration>
+	                <serverId>ossrh</serverId>
+	                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+	                <autoReleaseAfterClose>true</autoReleaseAfterClose>
+	            </configuration>
+	        </plugin>
+  			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.5.1</version>
 				<configuration>
@@ -95,5 +161,39 @@
 			<version>4.5.13</version>
 		</dependency>
 	</dependencies>
+
+	<profiles>
+    	<profile>
+	        <id>release</id>
+	        <build>
+				<plugins>
+					<plugin>
+					    <groupId>org.sonatype.plugins</groupId>
+					    <artifactId>nexus-staging-maven-plugin</artifactId>
+					    <version>1.6.8</version>
+					    <extensions>true</extensions>
+					    <configuration>
+					        <serverId>ossrh</serverId>
+					        <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+					        <autoReleaseAfterClose>true</autoReleaseAfterClose>
+					    </configuration>
+					</plugin>				
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<configuration>
+					        <!-- Prevent gpg from using pinentry programs -->
+					        <gpgArguments>
+					            <arg>--pinentry-mode</arg>
+					            <arg>loopback</arg>
+					        </gpgArguments>
+					    </configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 
 </project>

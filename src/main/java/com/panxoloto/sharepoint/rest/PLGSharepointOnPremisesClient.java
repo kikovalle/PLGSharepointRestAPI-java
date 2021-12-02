@@ -840,4 +840,10 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	public void refreshToken() throws Exception {
 		LOG.debug("Nothing to do here as we are using a credentials provider on the rest template");
 	}
+
+	@Override
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int cnunkSize) throws Exception {
+		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
+		throw new RuntimeException("Implementation pending");
+	}
 }
