@@ -6,6 +6,9 @@ Changelog registry
 ### Added
 - Chunked file upload implementation for Sharepoint Online client for uploading big files.
 
+### Changed
+- Group id changed to adapt code to generate releases to maven central.
+
 ## 2021-06-02
 ### Added
 - Allow using cloud logging with clientID/clientSecret
