@@ -33,6 +33,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Install GPG secret key
+        run: echo "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | gpg --batch --import
+
       - name: Publish to Maven Central
         run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Darguments=-Dgpg.passphrase=thephrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
