@@ -40,13 +40,7 @@ jobs:
       - name: Publish to Maven Central
         working-directory: 'string-array-utils'
         run: |
-          mvn \
-            --no-transfer-progress \
-            --batch-mode \
-            -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} \
-            -DskipTests \
-            -Prelease \
-            deploy
+          mvn  --no-transfer-progress  --batch-mode  -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}  -DskipTests  -Prelease  deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
