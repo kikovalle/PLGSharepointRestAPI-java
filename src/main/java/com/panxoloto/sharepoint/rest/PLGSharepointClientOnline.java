@@ -388,9 +388,8 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		return response;
 	}
 
-
 	@Override
-	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int cnunkSize) throws Exception {
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkSize, String fileName)  throws Exception {
 		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
 		JSONObject submeta = new JSONObject();
 		if (jsonMetadata.has("type")) {
@@ -409,7 +408,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	        headers, HttpMethod.POST, 
 	        this.tokenHelper.getSharepointSiteUrl(
 		    		"/_api/web/GetFolderByServerRelativeUrl('" + folder +"')/Files/add(url='"
-					+ resource.getFilename() + "',overwrite=true)"
+					+ fileName + "',overwrite=true)"
 		    		)
 	        );
 
@@ -429,7 +428,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    headers.add("Content-Type", "application/octet-stream");
 	    headers.add("Accept", "application/json;odata=verbose");
 	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
-	    byte[] bytes = new byte[cnunkSize];
+	    byte[] bytes = new byte[chunkSize];
 	    try (InputStream is = resource.getInputStream();) {
 	    	boolean firstChunk = true;
 	    	int totalLength = is.available();
@@ -495,7 +494,12 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    ResponseEntity<String> responseEntity1 = restTemplate.exchange(requestEntity1, String.class);
 	    
 	    return new JSONObject(responseEntity1.getBody());
+	}
+	
 
+	@Override
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkSize) throws Exception {
+		return uploadBigFile(folder, resource, jsonMetadata, chunkSize, resource.getFilename());
 	}
 	
 	/**

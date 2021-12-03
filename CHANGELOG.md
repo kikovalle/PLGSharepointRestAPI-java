@@ -1,6 +1,12 @@
 # Change Log
 Changelog registry
 
+## 2021-12-03
+### Added
+- Method overwrite for chunked upload from a mem byte buffer, allowing to provide a filename.
+
+### Changed
+- Renamed parameter to chunkFileSize
 
 ## 2021-12-02
 ### Added
