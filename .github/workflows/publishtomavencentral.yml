@@ -33,16 +33,8 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-#      - name: Install GPG secret key
-#        run: echo "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | gpg --batch --import
-
-#      - name: Get latest version and update based on previous commits
-#        working-directory: 'string-array-utils'
-#        run: ./bump_version.sh
-
       - name: Publish to Maven Central
-        working-directory: 'string-array-utils'
-        run:  mvn  --no-transfer-progress  --batch-mode  -DskipTests  -Prelease  deploy
+        run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
