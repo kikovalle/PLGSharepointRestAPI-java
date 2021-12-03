@@ -33,9 +33,9 @@ jobs:
 #      - name: Install GPG secret key
 #        run: echo "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | gpg --batch --import
 
-      - name: Get latest version and update based on previous commits
-        working-directory: 'string-array-utils'
-        run: ./bump_version.sh
+#      - name: Get latest version and update based on previous commits
+#        working-directory: 'string-array-utils'
+#        run: ./bump_version.sh
 
       - name: Publish to Maven Central
         working-directory: 'string-array-utils'
