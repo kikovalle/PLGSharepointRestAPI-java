@@ -37,6 +37,6 @@ jobs:
       run: mvn deploy -Prelease
       env:
         GITHUB_TOKEN: ${{ github.token }}
-        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        MAVEN_USERNAME: ${{ env.secrets.OSSRH_USERNAME }}
+        MAVEN_PASSWORD: ${{ ebv,secrets.OSSRH_PASSWORD }}
    
