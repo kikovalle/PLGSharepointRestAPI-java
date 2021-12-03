@@ -842,7 +842,14 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	}
 
 	@Override
-	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int cnunkSize) throws Exception {
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize) throws Exception {
+		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
+		throw new RuntimeException("Implementation pending");
+	}
+
+	@Override
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize,
+			String fileName) throws Exception {
 		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
 		throw new RuntimeException("Implementation pending");
 	}
