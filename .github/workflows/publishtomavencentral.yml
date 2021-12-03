@@ -7,6 +7,9 @@ jobs:
   publish:
     name: Bump Maven version, release on GitHub and Maven Central
     runs-on: ubuntu-20.04
+    environment: 
+      name: env
+      url: https://github.com
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
