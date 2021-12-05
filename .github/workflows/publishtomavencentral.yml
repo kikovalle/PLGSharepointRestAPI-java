@@ -17,6 +17,9 @@ jobs:
           # We need all tags and commits to be able to determine new bump type
           fetch-depth: 0
 
+      - name: Install GPG secret key
+        run: gpg --keyserver keyserver.ubuntu.com --recv-keys ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+
       - name: Set up Java with Maven
         uses: actions/setup-java@v2
         with:
@@ -26,7 +29,7 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }} 
-          gpg-passphrase: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Cache Maven dependencies
         uses: actions/cache@v2
@@ -35,11 +38,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Install GPG secret key
-        run: gpg --keyserver keyserver.ubuntu.com --recv-keys ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-
       - name: Publish to Maven Central
         run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg.keyname=${{ secrets.OSSRH_GPG_SECRET_KEY }} -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
