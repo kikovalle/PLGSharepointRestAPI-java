@@ -35,15 +35,9 @@ jobs:
 
       - name: Install GPG secret key
         run: gpg --keyserver keyserver.ubuntu.com --recv-keys ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-        
-      - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@v1
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
 
       - name: Publish to Maven Central
-        run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Darguments=-Dgpg.keyname=${{ secrets.OSSRH_GPG_SECRET_KEY }} -Darguments=-Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg.keyname=${{ secrets.OSSRH_GPG_SECRET_KEY }} -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
