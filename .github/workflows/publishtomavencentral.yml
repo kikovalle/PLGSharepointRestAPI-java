@@ -20,6 +20,11 @@ jobs:
       - name: Install GPG secret key
         run: gpg --keyserver keyserver.ubuntu.com --recv-keys ${{ secrets.OSSRH_GPG_SECRET_KEY }}
 
+      - name: Install gpg secret key second step
+        run: |
+             cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+             gpg --list-secret-keys --keyid-format LONG
+
       - name: Set up Java with Maven
         uses: actions/setup-java@v2
         with:
