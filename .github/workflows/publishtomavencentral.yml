@@ -42,7 +42,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Publish to Maven Central
-        run:   gpg --keyserver keyserver.ubuntu.com --recv-keys ${{ secrets.OSSRH_GPG_SECRET_KEY }} | mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg.keyname=${{ secrets.OSSRH_GPG_SECRET_KEY }} -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run:   gpg --keyserver keyserver.ubuntu.com --recv-keys ${{ secrets.OSSRH_GPG_SECRET_KEY }} | mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg.keyname=${{ secrets.OSSRH_GPG_SECRET_KEY }} -Dgpg-passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
