@@ -42,7 +42,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Publish to Maven Central
-        run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg-passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} -Dgpg-passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
