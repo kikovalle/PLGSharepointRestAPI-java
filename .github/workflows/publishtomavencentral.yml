@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install GPG secret key
-        run: echo -n "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | base64 --decode | gpg --import
+        run: echo -n "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | base64 --decode | gpg --import --batch
 
       - name: List secret GPG keys
         run: gpg --list-secret-keys --keyid-format LONG
