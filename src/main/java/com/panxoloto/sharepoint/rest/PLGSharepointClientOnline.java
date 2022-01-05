@@ -491,9 +491,8 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	        headers, HttpMethod.POST, 
 	        this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + serverRelativeUrl + "')/listitemallfields")
 	        );
-	    ResponseEntity<String> responseEntity1 = restTemplate.exchange(requestEntity1, String.class);
-	    
-	    return new JSONObject(responseEntity1.getBody());
+	    restTemplate.exchange(requestEntity1, String.class);
+	    return jsonFileInfo;
 	}
 	
 
