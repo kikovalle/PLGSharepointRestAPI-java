@@ -399,6 +399,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		}
 		jsonMetadata.put("__metadata", submeta);
 		java.util.UUID uuid = java.util.UUID.randomUUID();
+		String cleanFolderName = folder.startsWith(spSiteUrl) ? folder.substring(spSiteUrl.length() + 1) : folder;
 		
 		Resource tmpRes = new ByteArrayResource(new byte[0]);
 		headers = headerHelper.getPostHeaders("");
@@ -407,7 +408,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    RequestEntity<Resource> requestEntityCreate = new RequestEntity<>(tmpRes, 
 	        headers, HttpMethod.POST, 
 	        this.tokenHelper.getSharepointSiteUrl(
-		    		"/_api/web/GetFolderByServerRelativeUrl('" + folder +"')/Files/add(url='"
+		    		"/_api/web/GetFolderByServerRelativeUrl('" + cleanFolderName +"')/Files/add(url='"
 					+ fileName + "',overwrite=true)"
 		    		)
 	        );

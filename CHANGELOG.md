@@ -1,6 +1,11 @@
 # Change Log
 Changelog registry
 
+## 2022-01-15
+- Control upload big file folder name to remove spSitePrefix from the remote path. Detected file corruption with files with a size bigger than 0.5GB.
+- Version increased to 1.0.5 to release to maven repo.
+- Spring framework dependency version updated.
+
 ## 2021-12-03
 ### Added
 - Method overwrite for chunked upload from a mem byte buffer, allowing to provide a filename.
