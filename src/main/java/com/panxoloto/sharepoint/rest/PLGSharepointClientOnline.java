@@ -1,8 +1,10 @@
 package com.panxoloto.sharepoint.rest;
 
-import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnline;
-import com.panxoloto.sharepoint.rest.helper.HeadersHelper;
-import com.panxoloto.sharepoint.rest.helper.Permission;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -20,10 +22,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
+import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnline;
+import com.panxoloto.sharepoint.rest.helper.HeadersHelper;
+import com.panxoloto.sharepoint.rest.helper.Permission;
 
 public class PLGSharepointClientOnline implements PLGSharepointClient {
 

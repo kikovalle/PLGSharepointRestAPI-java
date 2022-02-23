@@ -1,9 +1,10 @@
 package com.panxoloto.sharepoint.rest;
 
-import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnPremises;
-import com.panxoloto.sharepoint.rest.helper.HeadersOnPremiseHelper;
-import com.panxoloto.sharepoint.rest.helper.HttpProtocols;
-import com.panxoloto.sharepoint.rest.helper.Permission;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -23,10 +24,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.function.Supplier;
+import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnPremises;
+import com.panxoloto.sharepoint.rest.helper.HeadersOnPremiseHelper;
+import com.panxoloto.sharepoint.rest.helper.HttpProtocols;
+import com.panxoloto.sharepoint.rest.helper.Permission;
+
 
 public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
