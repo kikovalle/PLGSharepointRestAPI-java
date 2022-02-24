@@ -3,8 +3,10 @@ package com.panxoloto.sharepoint.rest;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,7 +35,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	private String spSiteUrl;
 	private AuthTokenHelperOnline tokenHelper;
 	private HeadersHelper headerHelper;
-	
+
 	/**
 	 * @param spSiteUr.- The sharepoint site URL like https://contoso.sharepoint.com/sites/contososite
 	 */
@@ -45,17 +47,20 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	 */
 	public PLGSharepointClientOnline(String user, 
 			String passwd, String domain, String spSiteUrl) throws Exception {
-		super();
-		init(user, passwd, domain, spSiteUrl,false);
+		this(user, passwd, domain, spSiteUrl,false);
 	}
 
 	public PLGSharepointClientOnline(String user, String passwd, String domain, String site, boolean useClienId) throws Exception {
-		super();
-		init(user, passwd, domain, site, useClienId);
+		this(user, passwd, domain, site, useClienId, HttpClients::custom);
 	}
 
-	private void init(String user, String passwd, String domain, String spSiteUrl, boolean useClienId) throws Exception {
-		CloseableHttpClient httpClient = HttpClients.custom().build();
+	public PLGSharepointClientOnline(String user, String passwd, String domain, String site, boolean useClienId, Supplier<HttpClientBuilder> httpClientBuilderSupplier) throws Exception {
+		super();
+		init(user, passwd, domain, site, useClienId, httpClientBuilderSupplier);
+	}
+
+	private void init(String user, String passwd, String domain, String spSiteUrl, boolean useClienId, Supplier<HttpClientBuilder> httpClientBuilderSupplier) throws Exception {
+		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
 		requestFactory.setHttpClient(httpClient);
 		this.restTemplate = new StreamRestTemplate(requestFactory);

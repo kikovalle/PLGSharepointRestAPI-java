@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -19,6 +20,7 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
@@ -35,11 +37,17 @@ public class CloudTokenForClientIdGetter {
 	private String clientId;
 	private String clientSecret;
 	private String siteURL;
+	private Supplier<HttpClientBuilder> httpClientBuilderSupplier;
 
 	public CloudTokenForClientIdGetter(String clientId, String clientSecret, String siteURL) {
+		this(clientId, clientSecret, siteURL, HttpClients::custom);
+	}
+
+	public CloudTokenForClientIdGetter(String clientId, String clientSecret, String siteURL, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
 		this.siteURL = siteURL;
+		this.httpClientBuilderSupplier = httpClientBuilderSupplier;
 	}
 
 	private String spOnlineRealm = null;
@@ -67,7 +75,7 @@ public class CloudTokenForClientIdGetter {
 		String url = siteURL+"/_vti_bin/client.svc/";
 		HttpGet get = new HttpGet(url);
 		get.setHeader(org.apache.http.HttpHeaders.AUTHORIZATION, "Bearer");
-		CloseableHttpClient httpClient = HttpClients.custom().build();
+		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 
 		try (CloseableHttpResponse response = httpClient.execute(get, (HttpContext) null)) {
 			Header[] headers = response.getHeaders("WWW-Authenticate");
@@ -91,7 +99,7 @@ public class CloudTokenForClientIdGetter {
 		HttpEntity multipart = fillInSPOnlineTokenRequestData();
 		post.setEntity(multipart);
 
-		CloseableHttpClient httpClient = HttpClients.custom().build();
+		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 		Date reqDate = new Date();
 		try (CloseableHttpResponse response = httpClient.execute(post, (HttpContext) null)) {
 			HttpEntity entity = response.getEntity();

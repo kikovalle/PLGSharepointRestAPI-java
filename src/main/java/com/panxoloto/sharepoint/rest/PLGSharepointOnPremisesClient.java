@@ -3,12 +3,14 @@ package com.panxoloto.sharepoint.rest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,6 +29,7 @@ import com.panxoloto.sharepoint.rest.helper.HeadersOnPremiseHelper;
 import com.panxoloto.sharepoint.rest.helper.HttpProtocols;
 import com.panxoloto.sharepoint.rest.helper.Permission;
 
+
 public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 
@@ -38,6 +41,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	private HttpProtocols protocol = HttpProtocols.HTTPS;
 	private String digestKey = null;
 	private Date digestKeyExpiration;
+	private Supplier<HttpClientBuilder> httpClientBuilderSupplier = HttpClients::custom;
 
 	private static final int DEFAULT_EXPIRATION = 1800;
 
@@ -57,7 +61,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		
 		CredentialsProvider credsProvider = new BasicCredentialsProvider();
 		credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(user, passwd, spSiteUrl, domain));
-		CloseableHttpClient httpClient = HttpClients.custom()
+		CloseableHttpClient httpClient = httpClientBuilderSupplier.get()
 		        .setDefaultCredentialsProvider(credsProvider)
 		        .build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
