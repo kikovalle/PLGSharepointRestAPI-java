@@ -77,6 +77,16 @@ public interface PLGSharepointClient {
 	JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception;
 	
 	/**
+	 * @param title
+	 * @param itemId
+	 * @param jsonExtendedAttrs
+	 * @param query
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception;
+	
+	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.
 	 * @return json string representing folder info.
