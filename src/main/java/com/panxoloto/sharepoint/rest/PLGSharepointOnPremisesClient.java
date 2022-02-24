@@ -291,6 +291,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    return new JSONObject(responseEntity.getBody());
 	}
 
+	@Override
 	public JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception {
 		LOG.debug("getListItem {} itemId {} jsonExtendedAttrs {} query {}", new Object[] {title, itemId, jsonExtendedAttrs, query});
 		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);

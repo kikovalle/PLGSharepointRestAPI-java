@@ -1,6 +1,11 @@
 # Change Log
 Changelog registry
 
+## 2022-02-24
+- Configurable HttpClient
+- Method to retrieve information about a list item.
+- Version updated to 1.0.7 to release to maven central.
+
 ## 2022-01-15
 - Control upload big file folder name to remove spSitePrefix from the remote path. Detected file corruption with files with a size bigger than 0.5GB.
 - Version increased to 1.0.5 to release to maven repo.
