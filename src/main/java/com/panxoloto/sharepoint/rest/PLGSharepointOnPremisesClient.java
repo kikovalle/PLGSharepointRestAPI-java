@@ -286,7 +286,22 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 	    return new JSONObject(responseEntity.getBody());
 	}
-	
+
+	public JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception {
+		LOG.debug("getListItem {} itemId {} jsonExtendedAttrs {} query {}", new Object[] {title, itemId, jsonExtendedAttrs, query});
+		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
+				headers, HttpMethod.GET,
+				this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items(" + itemId + ")", query)
+		);
+
+		ResponseEntity<String> responseEntity =
+				restTemplate.exchange(requestEntity, String.class);
+
+		return new JSONObject(responseEntity.getBody());
+	}
+
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.
