@@ -5,10 +5,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
 
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -67,6 +70,7 @@ public class AuthTokenHelperOnline {
 	private String passwd; // clientSecret when useClientId is true
 	private boolean useClientId;
 	private CloudTokenForClientIdGetter cloudTokenGetter = null;
+	private Supplier<HttpClientBuilder> httpClientBuilderSupplier;
 
 	public boolean isUseClientId() {
 		return useClientId;
@@ -84,16 +88,18 @@ public class AuthTokenHelperOnline {
 	 * @param spSiteUri
 	 */
 	public AuthTokenHelperOnline(RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUri) {
-		super();
-		this.restTemplate = restTemplate;
-		this.domain = domain;
-		this.spSiteUri = spSiteUri;
-		this.user = user;
-		this.passwd = passwd;
-		this.useClientId = false;
+		this(false, restTemplate, user, passwd, domain, spSiteUri, HttpClients::custom);
+	}
+
+	public AuthTokenHelperOnline(RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUri, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
+		this(false, restTemplate, user, passwd, domain, spSiteUri, httpClientBuilderSupplier);
 	}
 
 	public AuthTokenHelperOnline(boolean useClientId, RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUrl) {
+		this(useClientId, restTemplate, user, passwd, domain, spSiteUrl, HttpClients::custom);
+	}
+
+	public AuthTokenHelperOnline(boolean useClientId, RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUrl, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
 		super();
 		this.restTemplate = restTemplate;
 		this.domain = domain;
@@ -101,6 +107,7 @@ public class AuthTokenHelperOnline {
 		this.user = user;  // clientID when useClientId is true
 		this.passwd = passwd; // clientSecret when useClientId is true
 		this.useClientId = useClientId;
+		this.httpClientBuilderSupplier = httpClientBuilderSupplier;
 	}
 
 	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException {
@@ -114,7 +121,7 @@ public class AuthTokenHelperOnline {
 	protected String getSecurityTokenUsingClientId() {
 		if (cloudTokenGetter == null) {
 			try {
-				cloudTokenGetter = new CloudTokenForClientIdGetter(user, passwd, getSharepointSiteUrl("").toString());
+				cloudTokenGetter = new CloudTokenForClientIdGetter(user, passwd, getSharepointSiteUrl("").toString(), httpClientBuilderSupplier);
 			} catch (URISyntaxException e) {
 				throw new RuntimeException("can't get security token", e);
 			}

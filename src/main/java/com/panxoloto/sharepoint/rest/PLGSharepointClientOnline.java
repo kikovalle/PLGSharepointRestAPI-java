@@ -75,9 +75,9 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			this.spSiteUrl = String.format("%s%s", "/", this.spSiteUrl);
 		}
 		if (useClienId) {
-			this.tokenHelper = new AuthTokenHelperOnline(true, this.restTemplate, user, passwd, domain, spSiteUrl);
+			this.tokenHelper = new AuthTokenHelperOnline(true, this.restTemplate, user, passwd, domain, spSiteUrl, httpClientBuilderSupplier);
 		} else {
-			this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl);
+			this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl, httpClientBuilderSupplier);
 		}
 		this.tokenHelper.init();
 		this.headerHelper = new HeadersHelper(this.tokenHelper);
