@@ -269,4 +269,23 @@ public interface PLGSharepointClient {
 	 * @return
 	 */
 	JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize, String fileName) throws Exception;
+
+	/**
+	 * @param listTitle
+	 * @param itemId
+	 * @param itemType
+	 * @param data
+	 * @return
+	 * @throws Exception
+	 */
+	boolean updateListItem(String listTitle, int itemId, String itemType, JSONObject data) throws Exception;
+
+	/**
+	 * @param listTitle
+	 * @param itemType
+	 * @param data
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject createListItem(String listTitle, String itemType, JSONObject data) throws Exception;
 }
