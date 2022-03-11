@@ -36,6 +36,8 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	private AuthTokenHelperOnline tokenHelper;
 	private HeadersHelper headerHelper;
 
+	private static final String METADATA = "__metadata";
+
 	/**
 	 * @param spSiteUr.- The sharepoint site URL like https://contoso.sharepoint.com/sites/contososite
 	 */
@@ -75,9 +77,9 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			this.spSiteUrl = String.format("%s%s", "/", this.spSiteUrl);
 		}
 		if (useClienId) {
-			this.tokenHelper = new AuthTokenHelperOnline(true, this.restTemplate, user, passwd, domain, spSiteUrl);
+			this.tokenHelper = new AuthTokenHelperOnline(true, this.restTemplate, user, passwd, domain, spSiteUrl, httpClientBuilderSupplier);
 		} else {
-			this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl);
+			this.tokenHelper = new AuthTokenHelperOnline(this.restTemplate, user, passwd, domain, spSiteUrl, httpClientBuilderSupplier);
 		}
 		this.tokenHelper.init();
 		this.headerHelper = new HeadersHelper(this.tokenHelper);
@@ -259,7 +261,47 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 
 		return new JSONObject(responseEntity.getBody());
 	}
-	
+
+	public JSONObject createListItem(String listTitle, String itemType, JSONObject data) throws Exception {
+		LOG.debug("updateListItem list {} itemType {} data {}", new Object[] {listTitle, itemType, data});
+		JSONObject payload = new JSONObject(data, JSONObject.getNames(data));
+		if (itemType != null && !payload.has(METADATA)) {
+			JSONObject meta = new JSONObject();
+			meta.put("type", itemType);
+			payload.put(METADATA, meta);
+		}
+
+		String payloadStr = payload.toString();
+		MultiValueMap<String, String> headers = headerHelper.getPostHeaders(payloadStr);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr,
+				headers, HttpMethod.POST,
+				this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + listTitle + "')/items")
+		);
+		ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
+		return new JSONObject(responseEntity.getBody());
+	}
+
+	public boolean updateListItem(String listTitle, int itemId, String itemType, JSONObject data) throws Exception {
+		LOG.debug("updateListItem list {} itemId {} itemType {} data {}", new Object[] {listTitle, itemId, itemType, data});
+		JSONObject payload = new JSONObject(data, JSONObject.getNames(data));
+		if (itemType != null && !payload.has(METADATA)) {
+			JSONObject meta = new JSONObject();
+			meta.put("type", itemType);
+			payload.put(METADATA, meta);
+		}
+
+		String payloadStr = payload.toString();
+		MultiValueMap<String, String> headers = headerHelper.getUpdateHeaders(payloadStr);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr,
+				headers, HttpMethod.POST,
+				this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + listTitle + "')/items(" + itemId +")")
+		);
+		ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
+		return responseEntity.getStatusCode().is2xxSuccessful();
+	}
+
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.
