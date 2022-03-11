@@ -1,6 +1,11 @@
 # Change Log
 Changelog registry
 
+## 2022-03-11
+- Released version 1.0.8 under MIT license and published to Maven Central
+- Added methods for creating and updating a list item
+- Added custom HttpClientBuilder support (Online client)
+
 ## 2022-02-24
 - Configurable HttpClient
 - Method to retrieve information about a list item.
