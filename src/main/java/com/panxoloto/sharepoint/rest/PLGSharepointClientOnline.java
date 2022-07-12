@@ -187,18 +187,27 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 
     @Override
     public JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception {
-        LOG.debug("getListByTitle {} jsonExtendedAttrs {}", title, jsonExtendedAttrs);
+        LOG.debug("getListItems from list {} jsonExtendedAttrs {}", title, jsonExtendedAttrs);
         headers = headerHelper.getGetHeaders(true);
 
-        RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
-                headers, HttpMethod.GET,
-                this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items", filter)
-        );
+        URI request = this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items", filter);
+        JSONArray results = new JSONArray();
+        while (request != null) {
+            RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
+                    headers, HttpMethod.GET, request);
 
-        ResponseEntity<String> responseEntity =
-                restTemplate.exchange(requestEntity, String.class);
-
-        return new JSONObject(responseEntity.getBody());
+            ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+            if (requestEntity.hasBody()) {
+                JSONObject temp = new JSONObject(Objects.requireNonNull(responseEntity.getBody())).getJSONObject("d");
+                temp.getJSONArray("results").forEach(results::put);
+                if (temp.has("__next")) {
+                    LOG.debug("There's another part. Let's explore it.");
+                    request = new URI(temp.getString("__next"));
+                } else request = null;
+            }
+            else request = null;
+        }
+        return new JSONObject("{\"d\":{\"results\":" + results + "}}");
     }
 
 
