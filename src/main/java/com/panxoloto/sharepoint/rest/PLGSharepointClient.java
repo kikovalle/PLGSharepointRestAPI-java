@@ -14,74 +14,76 @@ public interface PLGSharepointClient {
 	 * @throws Exception
 	 */
 	void refreshToken() throws Exception;
-	
+
 	/**
 	 * Method to get json string wich you can transform to a JSONObject and get data from it.
-	 * 
-	 * 
-	 * @param data - Data to be sent as query (look at the rest api documentation on how to include search filters).
-	 * @return.- String representing a json object if the auth is correct.
+	 *
+	 *
+	 * @param data Data to be sent as query (look at the rest api documentation on how to include search filters).
+	 * @return JSONObject if the auth is correct.
 	 * @throws Exception
 	 */
 	JSONObject getAllLists(String data) throws Exception;
-	
+
 	/**
 	 * Retrieves list info by list title.
-	 * 
-	 * @param title - Site list title to query info.
-	 * @param jsonExtendedAttrs - form json body for advanced query (take a look at ms documentation about rest api).
-	 * @return json string with list information that can be used to get a JSONObject to use this info.
+	 *
+	 * @param title Site list title to query info.
+	 * @param jsonExtendedAttrs form json body for advanced query (take a look at ms documentation about rest api).
+	 * @return json with list information.
 	 * @throws Exception thrown when something went wrong.
 	 */
 	JSONObject getListByTitle(String title, String jsonExtendedAttrs) throws Exception;
 
 	/**
-	 * Retrieves list info by list title.
-	 * 
-	 * @param title - Site list title to query info.
-	 * @return json string with list information that can be used to get a JSONObject to use this info.
+	 * Retrieves list fields by list title.
+	 *
+	 * @param title Site list title to query info.
+	 * @return JSON of the list fields.
 	 * @throws Exception thrown when something went wrong.
 	 */
 	JSONObject getListFields(String title) throws Exception;
 
 
-	
-	
+
+
 	/**
-	 * @param listTitle
-	 * @param description
-	 * @return
+	 * Creates a list from a title and a description.
+	 * @param listTitle Title of the new list.
+	 * @param description Description of the list.
+	 * @return JSON of the response from this list creation.
 	 * @throws Exception
 	 */
 	JSONObject createList(String listTitle, String description) throws Exception;
 
-	
-	
-	
+
+
+
 	/**
-	 * @param listTitle
-	 * @param newDescription
-	 * @return
+	 * Updates the list information. There needs to be a list of that title.
+	 * @param listTitle Title of the list to query info before update.
+	 * @param newDescription New description of the list.
+	 * @return JSON of the response from this update.
 	 * @throws Exception
 	 */
 	JSONObject updateList(String listTitle, String newDescription) throws Exception;
 
-	
 	/**
-	 * @param title
-	 * @param jsonExtendedAttrs
-	 * @param filter
-	 * @return
+	 * Get all the items from the list.
+	 * @param title Title of the list to query info.
+	 * @param jsonExtendedAttrs Extended arguments.
+	 * @param filter Filter for the items.
+	 * @return JSON of the list.
 	 * @throws Exception
 	 */
 	JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception;
-	
+
 	/**
-	 * @param title
-	 * @param itemId
-	 * @param jsonExtendedAttrs
-	 * @param query
-	 * @return
+	 * Get a specific item from the list.
+	 * @param title Title of the list to query info.
+	 * @param jsonExtendedAttrs Extended arguments.
+	 * @param query Name of the item you want to query.
+	 * @return JSON of the queried item.
 	 * @throws Exception
 	 */
 	JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception;
@@ -89,7 +91,7 @@ public interface PLGSharepointClient {
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.
-	 * @return json string representing folder info.
+	 * @return JSONObject representing folder info.
 	 * @throws Exception thrown when something went wrong.
 	 */
 	JSONObject getFolderByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
@@ -105,33 +107,42 @@ public interface PLGSharepointClient {
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.
-	 * @return json string representing list of files.
+	 * @return JSONObject representing list of files.
 	 * @throws Exception thrown when something went wrong.
 	 */
 	JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
 
 	/**
-	 * @param fileServerRelativeUrl
-	 * @return
+	 * Deletes a file.
+	 * @param fileServerRelativeUrl Relative URL to the file.
+	 * @return True if file was deleted.
 	 * @throws Exception
 	 */
 	Boolean deleteFile(String fileServerRelativeUrl) throws Exception;
 
+	/**
+	 * Get info on a file.
+	 * @param fileServerRelativeUrl Relative URL to the file.
+	 * @return JSON of the info.
+	 * @throws Exception
+	 */
 	JSONObject getFileInfo(String fileServerRelativeUrl) throws Exception;
 
 	/**
-	 * @param fileServerRelativeUrl
-	 * @return
+	 * Downloads a file.
+	 * @param fileServerRelativeUrl Relative URL to the file.
+	 * @return InputStreamResource to the file.
 	 * @throws Exception
 	 */
 	InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception;
 
 	/**
-	 * @param fileServerRelativeUrl
-	 * @return
+	 * Downloads a file, and includes the whole response.
+	 * @param fileServerRelativeUrl Relative URL to the file.
+	 * @return ResponseEntity of an InputStreamResource.
 	 * @throws Exception
 	 */
-	ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception;
+	ResponseEntity<InputStreamResource> downloadFileWithResponse(String fileServerRelativeUrl) throws Exception;
 
 	
 	/**
