@@ -46,7 +46,7 @@
 		<guava.version>[31.1-jre,)</guava.version>
 		<junit.version>4.13.2</junit.version>
 		<testng.version>7.6.1</testng.version> <!-- 7.6.1 has vulnerabilities from SnakeYAML 1.30 -->
-		<snakeyaml.version>1.33</snakeyaml.version> <!-- Temporary replacement dependency -->
+		<snakeyaml.version>2.0</snakeyaml.version> <!-- Temporary replacement dependency -->
 		<gson.version>2.9.1</gson.version>
 		<httpmime.version>4.5.13</httpmime.version>
 		<jakarta.xml.ws.version>4.0.0</jakarta.xml.ws.version>
