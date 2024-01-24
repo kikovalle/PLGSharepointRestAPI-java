@@ -1,6 +1,6 @@
 package com.panxoloto.sharepoint.rest.helper;
 
-import javax.xml.soap.SOAPFault;
+import jakarta.xml.soap.SOAPFault;
 
 public class AuthenticationException
 	extends RuntimeException
