@@ -3,31 +3,33 @@ package com.panxoloto.sharepoint.rest.helper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
 
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 public class AuthTokenHelper {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AuthTokenHelper.class);
-	private MultiValueMap<String, String> headers;
 	private String spSiteUri;
 	private String formDigestValue ;
 	private String domain;
+	private Supplier<HttpClientBuilder> httpClientBuilderSupplier;
 	private List<String> cookies;
 	private final String TOKEN_LOGIN_URL = "https://login.microsoftonline.com/extSTS.srf";
 	private String payload = "<s:Envelope xmlns:s=\"http://www.w3.org/2003/05/soap-envelope\"\n"
@@ -60,37 +62,33 @@ public class AuthTokenHelper {
 			+ "    </t:RequestSecurityToken>\n" 
 			+ "  </s:Body>\n" 
 			+ "</s:Envelope>";
-	
-	private RestTemplate restTemplate;
 
 	/**
 	 * Helper class to manage login against SharepointOnline and retrieve auth token and cookies to
 	 * perform calls to rest API.
 	 * Retrieves all info needed to set auth headers to call Sharepoint Rest API v1.
 	 * 
-	 * @param restTemplate
+	 * @param httpClientBuilderSupplier
 	 * @param user
 	 * @param passwd
 	 * @param domain
 	 * @param spSiteUri
 	 */
-	public AuthTokenHelper(RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUri) {
+	public AuthTokenHelper(Supplier<HttpClientBuilder> httpClientBuilderSupplier, String user, String passwd, String domain, String spSiteUri) {
 		super();
-		this.restTemplate = restTemplate;
 		this.domain = domain;
 		this.spSiteUri = spSiteUri;
 		this.payload = String.format(this.payload, user, passwd, domain);
 	}
 	
 	
-	protected String receiveSecurityToken() throws URISyntaxException {
-		RequestEntity<String> requestEntity = 
-	        new RequestEntity<>(this.payload, 
-	        HttpMethod.POST, 
-	        new URI(TOKEN_LOGIN_URL));
+	protected String receiveSecurityToken() throws URISyntaxException, ClientProtocolException, IOException {
+		CloseableHttpClient client = httpClientBuilderSupplier.get().build();
+		HttpPost post = new HttpPost(TOKEN_LOGIN_URL);
+		post.setEntity(new StringEntity(payload));
+		HttpResponse response = client.execute(post);
 
-	    ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		String securityToken = responseEntity.getBody();
+		String securityToken = EntityUtils.toString(response.getEntity());
 		String clave1 = "<wsse:BinarySecurityToken";
 		String clave2 = "</wsse:BinarySecurityToken>";
 		securityToken = securityToken.substring(securityToken.indexOf(clave1));
@@ -101,14 +99,17 @@ public class AuthTokenHelper {
 
 	protected List<String> getSignInCookies(String securityToken)
 			throws TransformerException, URISyntaxException, Exception {
-		RequestEntity<String> requestEntity = new RequestEntity<>(securityToken, HttpMethod.POST,
-				new URI(String.format("https://%s/_forms/default.aspx?wa=wsignin1.0", this.domain)));
-
-		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		HttpHeaders headers = responseEntity.getHeaders();
-		List<String> cookies = headers.get("Set-Cookie");
-
-		if (CollectionUtils.isEmpty(cookies)) {
+		CloseableHttpClient client = httpClientBuilderSupplier.get().build();
+		HttpPost post = new HttpPost(String.format("https://%s/_forms/default.aspx?wa=wsignin1.0", this.domain));
+		post.setEntity(new StringEntity(securityToken));
+		HttpResponse response = client.execute(post);
+		Header[] headers = response.getHeaders("Set-Cookie");
+		
+		List<String> cookies = new ArrayList<>();
+		for (Header header : headers) {
+			cookies.add(header.getValue());
+		}
+		if (cookies.size() < 1) {
 			throw new Exception("Unable to sign in: no cookies returned in response");
 		}
 		return cookies;
@@ -116,18 +117,14 @@ public class AuthTokenHelper {
 
 	protected String getFormDigestValue(List<String> cookies)
 			throws IOException, URISyntaxException, TransformerException, JSONException {
-
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  cookies.stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-
-		RequestEntity<String> requestEntity = new RequestEntity<>(headers, HttpMethod.POST,
-				new URI(String.format("https://%s/_api/contextinfo", this.domain)));
-
-		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		String body = responseEntity.getBody();
-		JSONObject json = new JSONObject(body);
+		CloseableHttpClient client = httpClientBuilderSupplier.get().build();
+		HttpPost post = new HttpPost(String.format("https://%s/_api/contextinfo", this.domain));
+		post.addHeader("Cookie",  cookies.stream().collect(Collectors.joining(";")));
+		post.addHeader("Accept", "application/json;odata=verbose");
+		post.addHeader("X-ClientService-ClientTag", "SDK-JAVA");
+		post.setEntity(new StringEntity(""));
+		HttpResponse response = client.execute(post);
+		JSONObject json = new JSONObject(EntityUtils.toString(response.getEntity()));
 
 		return json.getJSONObject("d").getJSONObject("GetContextWebInformation").getString("FormDigestValue");
 	}

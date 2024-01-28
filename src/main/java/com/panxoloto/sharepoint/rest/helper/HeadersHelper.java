@@ -1,8 +1,11 @@
 package com.panxoloto.sharepoint.rest.helper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.util.LinkedMultiValueMap;
+import org.apache.http.Header;
+import org.apache.http.message.BasicHeader;
 
 public class HeadersHelper {
 
@@ -15,15 +18,15 @@ public class HeadersHelper {
 	/**
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getGetHeaders(boolean includeAuthHeader) {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+	public List<Header> getGetHeaders(boolean includeAuthHeader) {
+		List<Header> headers = new ArrayList<>();
+		headers.add(new BasicHeader("Cookie", this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) ));
+		headers.add(new BasicHeader("Accept", "application/json;odata=verbose"));
+		headers.add(new BasicHeader("X-ClientService-ClientTag", "SDK-JAVA"));
 	    if (includeAuthHeader || tokenHelper.isUseClientId()) {
-	    	headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	    	headers.add(new BasicHeader("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue()));
 	    } else {
-	    	headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    	headers.add(new BasicHeader("X-RequestDigest", this.tokenHelper.getFormDigestValue()));
 	    }
 	    return headers;
 	}
@@ -32,14 +35,14 @@ public class HeadersHelper {
 	 * @param payloadStr
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getPostHeaders(String payloadStr) {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	public List<Header> getPostHeaders(String payloadStr) {
+		List<Header> headers = new ArrayList<>();
+		headers.add(new BasicHeader("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";"))) );
+		headers.add(new BasicHeader("Accept", "application/json;odata=verbose"));
+		headers.add(new BasicHeader("Content-Type", "application/json;odata=verbose"));
+		headers.add(new BasicHeader("Content-length", "" + payloadStr.getBytes().length));
+		headers.add(new BasicHeader("X-ClientService-ClientTag", "SDK-JAVA"));
+	    headers.add(new BasicHeader("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue()));
 	    return headers;
 	}
 	
@@ -47,30 +50,30 @@ public class HeadersHelper {
 	 * @param payloadStr
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getUpdateHeaders(String payloadStr) {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("Content-Type", "application/json;odata=verbose");
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-		headers.add("X-HTTP-Method", "MERGE");
-		headers.add("IF-Match", "*");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
+	public List<Header> getUpdateHeaders(String payloadStr) {
+		List<Header> headers = new ArrayList<>();
+		headers.add(new BasicHeader("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";"))) );
+		headers.add(new BasicHeader("Accept", "application/json;odata=verbose"));
+		headers.add(new BasicHeader("Content-Type", "application/json;odata=verbose"));
+		headers.add(new BasicHeader("Content-length", "" + payloadStr.getBytes().length));
+		headers.add(new BasicHeader("X-ClientService-ClientTag", "SDK-JAVA"));
+		headers.add(new BasicHeader("X-HTTP-Method", "MERGE"));
+		headers.add(new BasicHeader("IF-Match", "*"));
+	    headers.add(new BasicHeader("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue()));
 	    return headers;
 	}
 	
 	/**
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getDeleteHeaders() {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-	    headers.add("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue());
-	    headers.add("X-HTTP-Method", "DELETE");
-	    headers.add("IF-Match", "*");
+	public List<Header> getDeleteHeaders() {
+		List<Header> headers = new ArrayList<>();
+		headers.add(new BasicHeader("Cookie",  this.tokenHelper.getCookies().stream().collect(Collectors.joining(";"))) );
+		headers.add(new BasicHeader("Accept", "application/json;odata=verbose"));
+		headers.add(new BasicHeader("X-ClientService-ClientTag", "SDK-JAVA"));
+		headers.add(new BasicHeader("Authorization", "Bearer " + this.tokenHelper.getFormDigestValue()));
+		headers.add(new BasicHeader("X-HTTP-Method", "DELETE"));
+		headers.add(new BasicHeader("IF-Match", "*"));
 	    return headers;
 	}
 	

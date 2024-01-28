@@ -2,9 +2,11 @@
 
 Changelog registry
 
-## 1.0.9 Version
+## 2.0.0 Version (Unreleased)
 
-- Adapted to java11.
+- Removed springframework dependencies and migrated to use httpclient on http calls.
+- Compiled with jdk11.
+- Major breaking changes in interface methods to adapt to httpclient.
 
 ## 2022-03-11
 

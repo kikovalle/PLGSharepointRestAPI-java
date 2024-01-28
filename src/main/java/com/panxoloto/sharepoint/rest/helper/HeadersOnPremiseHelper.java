@@ -1,8 +1,11 @@
 package com.panxoloto.sharepoint.rest.helper;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.apache.http.message.BasicHeader;
 
 import com.panxoloto.sharepoint.rest.PLGSharepointOnPremisesClient;
 
@@ -14,94 +17,84 @@ public class HeadersOnPremiseHelper {
 		this.client = client;
 	}
 
-	private void addAcceptJson(LinkedMultiValueMap<String, String> headers) {
-		headers.add("Accept", "application/json;odata=verbose");
+	private void addAcceptJson(List<Header> headers) {
+		headers.add(new BasicHeader("Accept", "application/json;odata=verbose"));
 	}
 
-	private void addClientHeader(LinkedMultiValueMap<String, String> headers) {
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
+	private void addClientHeader(List<Header>  headers) {
+		headers.add(new BasicHeader("X-ClientService-ClientTag", "SDK-JAVA"));
 	}
 
-	private void addAgentHeader(LinkedMultiValueMap<String, String> headers) {
-		headers.add(HttpHeaders.USER_AGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)");
+	private void addAgentHeader(List<Header>  headers) {
+		headers.add(new BasicHeader(HttpHeaders.USER_AGENT, "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"));
 	}
 
-	private void addXFormsAuth(LinkedMultiValueMap<String, String> headers) {
-		headers.add("X-FORMS_BASED_AUTH_ACCEPTED", "f");
+	private void addXFormsAuth(List<Header>  headers) {
+		headers.add(new BasicHeader("X-FORMS_BASED_AUTH_ACCEPTED", "f"));
 	}
 
-	private void addContentType(LinkedMultiValueMap<String, String> headers) {
-		headers.add("Content-Type", "application/json;odata=verbose");
+	private void addContentType(List<Header>  headers) {
+		headers.add(new BasicHeader("Content-Type", "application/json;odata=verbose"));
 	}
 
-	private void addDigestKeyHeader(MultiValueMap<String, String> headers) throws Exception {
-		headers.add("X-RequestDigest", client.getDigestKey());
+	private void addDigestKeyHeader(List<Header>  headers) throws Exception {
+		headers.add(new BasicHeader("X-RequestDigest", client.getDigestKey()));
 	}
 
 
 	/**
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getGetHeaders(boolean includeAuthHeader) throws Exception {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-		addAcceptJson(headers);
-		addClientHeader(headers);
-		addXFormsAuth(headers);
-		addAgentHeader(headers);
+	public List<Header>  getGetHeaders(boolean includeAuthHeader) throws Exception {
+		List<Header>  headers = getCommonHeaders();
 		addDigestKeyHeader(headers);
 		return headers;
 	}
-
 
 	/**
 	 * @param payloadStr
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getPostHeaders(String payloadStr) throws Exception {
-		LinkedMultiValueMap<String, String> headers	= new LinkedMultiValueMap<>();
-		addAcceptJson(headers);
-		addClientHeader(headers);
-		addXFormsAuth(headers);
-		addAgentHeader(headers);
+	public List<Header> getPostHeaders(String payloadStr) throws Exception {
+		List<Header>  headers = getCommonHeaders();
 
 		addContentType(headers);
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
+		headers.add(new BasicHeader("Content-length", "" + payloadStr.getBytes().length));
 		addDigestKeyHeader(headers);
 		return headers;
 	}
-
 
 	/**
 	 * @param payloadStr
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getUpdateHeaders(String payloadStr) throws Exception {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+	public List<Header> getUpdateHeaders(String payloadStr) throws Exception {
+		List<Header>  headers = new ArrayList<>();
 		addAcceptJson(headers);
 		addContentType(headers);
-		headers.add("Content-length", "" + payloadStr.getBytes().length);
 		addClientHeader(headers);
-		headers.add("X-HTTP-Method", "MERGE");
-		headers.add("IF-Match", "*");
 		addDigestKeyHeader(headers);
+		headers.add(new BasicHeader("Content-length", "" + payloadStr.getBytes().length));
+		headers.add(new BasicHeader("X-HTTP-Method", "MERGE"));
+		headers.add(new BasicHeader("IF-Match", "*"));
 	    return headers;
 	}
 	
 	/**
 	 * @return
 	 */
-	public LinkedMultiValueMap<String, String> getDeleteHeaders() throws Exception {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+	public List<Header> getDeleteHeaders() throws Exception {
+		List<Header>  headers = new ArrayList<>();
 		addAcceptJson(headers);
 		addClientHeader(headers);
-		headers.add("X-HTTP-Method", "DELETE");
-	    headers.add("IF-Match", "*");
 		addDigestKeyHeader(headers);
+		headers.add(new BasicHeader("X-HTTP-Method", "DELETE"));
+	    headers.add(new BasicHeader("IF-Match", "*"));
 	    return headers;
 	}
 
-	public MultiValueMap<String, String> getCommonHeaders() {
-		LinkedMultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+	public List<Header> getCommonHeaders() {
+		List<Header>  headers = new ArrayList<>();
 		addAcceptJson(headers);
 		addClientHeader(headers);
 		addXFormsAuth(headers);

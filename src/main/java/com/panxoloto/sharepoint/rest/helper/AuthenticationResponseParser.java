@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import javax.xml.namespace.QName;
 
@@ -19,15 +20,17 @@ import jakarta.xml.soap.SOAPFault;
 import jakarta.xml.soap.SOAPMessage;
 
 public class AuthenticationResponseParser
-	extends Object
 {
-	public final static Charset utf8 = Charset.forName("utf8");
-	public final static QName binarySecurityTokenName = new QName
+	public static final Charset utf8 = StandardCharsets.UTF_8;
+	public static final QName binarySecurityTokenName = new QName
 	(
 		"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "BinarySecurityToken"
 	);
-	
-	public final static String  parseAuthenticationResponse( final String response )
+
+	private AuthenticationResponseParser() {
+	}
+
+	public static String  parseAuthenticationResponse(final String response )
 		throws AuthenticationException 
 	{
 		try ( final InputStream is = new ByteArrayInputStream(response.getBytes(utf8)) )
@@ -52,7 +55,7 @@ public class AuthenticationResponseParser
 		}
 	}
 	
-	private final static String token( final SOAPBody body )
+	private static String token( final SOAPBody body )
 	{
 		final NodeList list=body.getElementsByTagNameNS(binarySecurityTokenName.getNamespaceURI(), binarySecurityTokenName.getLocalPart());
 		if ( list.getLength()>0 )

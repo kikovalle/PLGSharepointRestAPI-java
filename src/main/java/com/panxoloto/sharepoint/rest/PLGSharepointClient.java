@@ -1,11 +1,11 @@
 package com.panxoloto.sharepoint.rest;
 
+import java.io.InputStream;
 import java.util.List;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.json.JSONObject;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.ResponseEntity;
 
 import com.panxoloto.sharepoint.rest.helper.Permission;
 
@@ -23,17 +23,17 @@ public interface PLGSharepointClient {
 	 * @return.- String representing a json object if the auth is correct.
 	 * @throws Exception
 	 */
-	JSONObject getAllLists(String data) throws Exception;
+	JSONObject getAllLists(List<NameValuePair> data) throws Exception;
 	
 	/**
 	 * Retrieves list info by list title.
 	 * 
 	 * @param title - Site list title to query info.
-	 * @param jsonExtendedAttrs - form json body for advanced query (take a look at ms documentation about rest api).
+	 * @param filterQueryData -query string with http client name value pairs.
 	 * @return json string with list information that can be used to get a JSONObject to use this info.
 	 * @throws Exception thrown when something went wrong.
 	 */
-	JSONObject getListByTitle(String title, String jsonExtendedAttrs) throws Exception;
+	JSONObject getListByTitle(String title, List<NameValuePair> filterQueryData) throws Exception;
 
 	/**
 	 * Retrieves list info by list title.
@@ -68,47 +68,47 @@ public interface PLGSharepointClient {
 
 	
 	/**
-	 * @param title
-	 * @param jsonExtendedAttrs
-	 * @param filter
+	 * @param title List title
+	 * @param queryExtFilter Extra filter query params for extended search
+	 * @param filter filter string, will be added to the query parameters as $filter, only need contenct
 	 * @return
 	 * @throws Exception
 	 */
-	JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception;
+	JSONObject getListItems(String title, List<NameValuePair> queryExtFilter, String filter) throws Exception;
 	
 	/**
 	 * @param title
 	 * @param itemId
-	 * @param jsonExtendedAttrs
+	 * @param queryExtFilter
 	 * @param query
 	 * @return
 	 * @throws Exception
 	 */
-	JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception;
+	JSONObject getListItem(String title, int itemId, List<NameValuePair> queryExtFilter, String query) throws Exception;
 	
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
-	 * @param jsonExtendedAttrs extended body for the query.
+	 * @param queryExtFilter extended body for the query.
 	 * @return json string representing folder info.
 	 * @throws Exception thrown when something went wrong.
 	 */
-	JSONObject getFolderByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
+	JSONObject getFolderByRelativeUrl(String folder, List<NameValuePair> queryExtFilter) throws Exception;
 
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
-	 * @param jsonExtendedAttrs extended body for the query.
+	 * @param queryExtFilter extended body for the query.
 	 * @return json string representing list of folders.
 	 * @throws Exception thrown when something went wrong.
 	 */
-	JSONObject getFolderFoldersByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
+	JSONObject getFolderFoldersByRelativeUrl(String folder, List<NameValuePair> queryExtFilter) throws Exception;
 
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
-	 * @param jsonExtendedAttrs extended body for the query.
+	 * @param queryExtFilter extended body for the query.
 	 * @return json string representing list of files.
 	 * @throws Exception thrown when something went wrong.
 	 */
-	JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception;
+	JSONObject getFolderFilesByRelativeUrl(String folder, List<NameValuePair> queryExtFilter) throws Exception;
 
 	/**
 	 * @param fileServerRelativeUrl
@@ -124,14 +124,14 @@ public interface PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
-	InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception;
+	InputStream downloadFile(String fileServerRelativeUrl) throws Exception;
 
 	/**
 	 * @param fileServerRelativeUrl
 	 * @return
 	 * @throws Exception
 	 */
-	ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception;
+	InputStream downloadFileWithReponse(String fileServerRelativeUrl) throws Exception;
 
 	
 	/**
@@ -141,7 +141,7 @@ public interface PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
-	JSONObject uploadFile(String folder, Resource resource, JSONObject jsonMetadata) throws Exception;
+	JSONObject uploadFile(String folder, InputStreamBody resource, JSONObject jsonMetadata) throws Exception;
 
 	/**
 	 * @param folder
@@ -151,7 +151,7 @@ public interface PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
-	JSONObject uploadFile(String folder, Resource resource, String fileName, JSONObject jsonMetadata) throws Exception;
+	JSONObject uploadFile(String folder, InputStreamBody resource, String fileName, JSONObject jsonMetadata) throws Exception;
 	
 	/**
 	 * @param fileServerRelatUrl
@@ -258,7 +258,7 @@ public interface PLGSharepointClient {
 	 * @return
 	 * @throws Exception
 	 */
-	JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize) throws Exception;
+	JSONObject uploadBigFile(String folder, InputStreamBody resource, JSONObject jsonMetadata, int chunkFileSize) throws Exception;
 
 	/**
 	 * @param folder
@@ -268,7 +268,7 @@ public interface PLGSharepointClient {
 	 * @param fileName
 	 * @return
 	 */
-	JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize, String fileName) throws Exception;
+	JSONObject uploadBigFile(String folder, InputStreamBody resource, JSONObject jsonMetadata, int chunkFileSize, String fileName) throws Exception;
 
 	/**
 	 * @param listTitle

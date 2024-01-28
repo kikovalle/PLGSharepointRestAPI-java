@@ -10,25 +10,23 @@ import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
 
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 public class AuthTokenHelperOnline {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AuthTokenHelperOnline.class);
-	private MultiValueMap<String, String> headers;
 	private String spSiteUri;
 	private String formDigestValue ;
 	private String domain;
@@ -65,7 +63,6 @@ public class AuthTokenHelperOnline {
 			+ "  </s:Body>\n" 
 			+ "</s:Envelope>";
 
-	private RestTemplate restTemplate;
 	private String user; // clientID when useClientId is true
 	private String passwd; // clientSecret when useClientId is true
 	private boolean useClientId;
@@ -87,21 +84,20 @@ public class AuthTokenHelperOnline {
 	 * @param domain
 	 * @param spSiteUri
 	 */
-	public AuthTokenHelperOnline(RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUri) {
-		this(false, restTemplate, user, passwd, domain, spSiteUri, HttpClients::custom);
+	public AuthTokenHelperOnline(String user, String passwd, String domain, String spSiteUri) {
+		this(false, user, passwd, domain, spSiteUri, HttpClients::custom);
 	}
 
-	public AuthTokenHelperOnline(RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUri, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
-		this(false, restTemplate, user, passwd, domain, spSiteUri, httpClientBuilderSupplier);
+	public AuthTokenHelperOnline(String user, String passwd, String domain, String spSiteUri, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
+		this(false, user, passwd, domain, spSiteUri, httpClientBuilderSupplier);
 	}
 
-	public AuthTokenHelperOnline(boolean useClientId, RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUrl) {
-		this(useClientId, restTemplate, user, passwd, domain, spSiteUrl, HttpClients::custom);
+	public AuthTokenHelperOnline(boolean useClientId, String user, String passwd, String domain, String spSiteUrl) {
+		this(useClientId, user, passwd, domain, spSiteUrl, HttpClients::custom);
 	}
 
-	public AuthTokenHelperOnline(boolean useClientId, RestTemplate restTemplate, String user, String passwd, String domain, String spSiteUrl, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
+	public AuthTokenHelperOnline(boolean useClientId, String user, String passwd, String domain, String spSiteUrl, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
 		super();
-		this.restTemplate = restTemplate;
 		this.domain = domain;
 		this.spSiteUri = spSiteUrl;
 		this.user = user;  // clientID when useClientId is true
@@ -110,7 +106,7 @@ public class AuthTokenHelperOnline {
 		this.httpClientBuilderSupplier = httpClientBuilderSupplier;
 	}
 
-	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException {
+	protected String receiveSecurityToken() throws URISyntaxException, AuthenticationException, ClientProtocolException, IOException {
 		if (useClientId) {
 			return getSecurityTokenUsingClientId();
 		} else {
@@ -129,15 +125,14 @@ public class AuthTokenHelperOnline {
 		return cloudTokenGetter.getToken();
 	}
 
-	protected String getSecurityTokenUsingUserName() throws URISyntaxException, AuthenticationException {
+	protected String getSecurityTokenUsingUserName() throws URISyntaxException, AuthenticationException, ClientProtocolException, IOException {
 		String payload = String.format(this.payload, user, passwd, domain);
-		RequestEntity<String> requestEntity =
-				new RequestEntity<>(payload,
-									HttpMethod.POST,
-									new URI(TOKEN_LOGIN_URL));
-
-		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		return AuthenticationResponseParser.parseAuthenticationResponse(responseEntity.getBody());
+		try (CloseableHttpClient client = httpClientBuilderSupplier.get().build()) {
+			HttpPost post = new HttpPost(TOKEN_LOGIN_URL);
+			post.setEntity(new StringEntity(payload));
+			HttpResponse response = client.execute(post);
+			return AuthenticationResponseParser.parseAuthenticationResponse(EntityUtils.toString(response.getEntity()));
+		}
 	}
 
 
@@ -147,18 +142,21 @@ public class AuthTokenHelperOnline {
 		if (useClientId) {
 			return new ArrayList<>();
 		}
-
-		RequestEntity<String> requestEntity = new RequestEntity<>(securityToken, HttpMethod.POST,
-				new URI(String.format("https://%s/_forms/default.aspx?wa=wsignin1.0", this.domain)));
-
-		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		HttpHeaders headers = responseEntity.getHeaders();
-		List<String> cookies = headers.get("Set-Cookie");
-
-		if (CollectionUtils.isEmpty(cookies)) {
-			throw new Exception("Unable to sign in: no cookies returned in response");
+		try (CloseableHttpClient client = httpClientBuilderSupplier.get().build()) {
+			HttpPost post = new HttpPost(String.format("https://%s/_forms/default.aspx?wa=wsignin1.0", this.domain));
+			post.setEntity(new StringEntity(securityToken));
+			HttpResponse response = client.execute(post);
+			Header[] headers = response.getHeaders("Set-Cookie");
+			
+			List<String> cookies = new ArrayList<>();
+			for (Header header : headers) {
+				cookies.add(header.getValue());
+			}
+			if (cookies.size() < 1) {
+				throw new Exception("Unable to sign in: no cookies returned in response");
+			}
+			return cookies;
 		}
-		return cookies;
 	}
 
 	protected String getFormDigestValue(List<String> cookies)
@@ -167,19 +165,16 @@ public class AuthTokenHelperOnline {
 			return cloudTokenGetter.getToken();
 		}
 
-		headers = new LinkedMultiValueMap<>();
-		headers.add("Cookie",  cookies.stream().collect(Collectors.joining(";")) );
-		headers.add("Accept", "application/json;odata=verbose");
-		headers.add("X-ClientService-ClientTag", "SDK-JAVA");
-
-		RequestEntity<String> requestEntity = new RequestEntity<>(headers, HttpMethod.POST,
-				new URI(String.format("https://%s/_api/contextinfo", this.domain)));
-
-		ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
-		String body = responseEntity.getBody();
-		JSONObject json = new JSONObject(body);
-
-		return json.getJSONObject("d").getJSONObject("GetContextWebInformation").getString("FormDigestValue");
+		try (CloseableHttpClient client = httpClientBuilderSupplier.get().build()) {
+			HttpPost post = new HttpPost(String.format("https://%s/_api/contextinfo", this.domain));
+			post.addHeader("Cookie",  cookies.stream().collect(Collectors.joining(";")));
+			post.addHeader("Accept", "application/json;odata=verbose");
+			post.addHeader("X-ClientService-ClientTag", "SDK-JAVA");
+			post.setEntity(new StringEntity(""));
+			HttpResponse response = client.execute(post);
+			JSONObject json = new JSONObject(EntityUtils.toString(response.getEntity()));
+			return json.getJSONObject("d").getJSONObject("GetContextWebInformation").getString("FormDigestValue");
+		}
 	}
 	
 	/**
