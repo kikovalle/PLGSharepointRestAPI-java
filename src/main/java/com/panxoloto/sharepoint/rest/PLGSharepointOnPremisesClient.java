@@ -1,17 +1,23 @@
 package com.panxoloto.sharepoint.rest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.auth.AuthSchemeFactory;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.NTCredentials;
+import org.apache.hc.client5.http.auth.StandardAuthScheme;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.auth.NTLMSchemeFactory;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.config.Lookup;
+import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -60,10 +66,17 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 			String passwd, String domain, String spSiteUrl, String spSitePrefix) {
 		super();
 		
-		CredentialsProvider credsProvider = new BasicCredentialsProvider();
-		credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(user, passwd, spSiteUrl, domain));
+		BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
+		credsProvider.setCredentials(new AuthScope(null, -1), new NTCredentials(user, passwd.toCharArray(), spSiteUrl, domain));
+        Lookup<AuthSchemeFactory> authSchemeRegistry = RegistryBuilder.<AuthSchemeFactory>create()
+                .register(StandardAuthScheme.NTLM, new NTLMSchemeFactory()).build();
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setTargetPreferredAuthSchemes(Collections.singletonList(StandardAuthScheme.NTLM)).build();
+		
 		CloseableHttpClient httpClient = httpClientBuilderSupplier.get()
 		        .setDefaultCredentialsProvider(credsProvider)
+		        .setDefaultAuthSchemeRegistry(authSchemeRegistry)
+		        .setDefaultRequestConfig(requestConfig)
 		        .build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
 		requestFactory.setHttpClient(httpClient);
@@ -565,7 +578,11 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		MultiValueMap<String, String> headers = headerHelper.getPostHeaders("");
 	    headers.remove("Content-Length");
 
-	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
+		byte[] bytes = resource.getContentAsByteArray();
+	    headers.add("Content-Length","" + bytes.length);
+	    LOG.debug("Content-Length {}", bytes.length);
+
+	    RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes, 
 	        headers, HttpMethod.POST, 
 	        this.tokenHelper.getSharepointSiteUrl(
 		    		"/_api/web/GetFolderByServerRelativeUrl('" + folder
@@ -719,7 +736,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 */
 	@Override
 	public JSONObject moveFolder(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
-		LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
+		LOG.debug("moveFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
 		MultiValueMap<String, String> headers = headerHelper.getPostHeaders("");
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
@@ -741,7 +758,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 */
 	@Override
 	public JSONObject moveFile(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
-		LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
+		LOG.debug("moveFile sourceRelativeServerUrl {} destinyRelativeServerUrl {}", new Object[] {sourceRelativeServerUrl, destinyRelativeServerUrl});
 		MultiValueMap<String, String> headers = headerHelper.getPostHeaders("");
 
 	    RequestEntity<String> requestEntity = new RequestEntity<>("", 
