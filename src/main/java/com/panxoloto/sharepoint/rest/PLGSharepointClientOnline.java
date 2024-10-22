@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -681,7 +681,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 
     @Override
     public JSONObject moveFolder(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
-        LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", sourceRelativeServerUrl, destinyRelativeServerUrl);
+        LOG.debug("moveFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", sourceRelativeServerUrl, destinyRelativeServerUrl);
         headers = headerHelper.getPostHeaders("");
 
         RequestEntity<String> requestEntity = new RequestEntity<>("",
@@ -703,7 +703,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
      */
     @Override
     public JSONObject moveFile(String sourceRelativeServerUrl, String destinyRelativeServerUrl) throws Exception {
-        LOG.debug("createFolder sourceRelativeServerUrl {} destinyRelativeServerUrl {}", sourceRelativeServerUrl, destinyRelativeServerUrl);
+        LOG.debug("moveFile sourceRelativeServerUrl {} destinyRelativeServerUrl {}", sourceRelativeServerUrl, destinyRelativeServerUrl);
         headers = headerHelper.getPostHeaders("");
 
         RequestEntity<String> requestEntity = new RequestEntity<>("",

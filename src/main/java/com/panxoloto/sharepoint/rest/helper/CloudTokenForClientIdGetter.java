@@ -9,20 +9,20 @@ import java.util.Date;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HeaderElement;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.protocol.HttpContext;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.entity.mime.StringBody;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,20 +74,17 @@ public class CloudTokenForClientIdGetter {
 	private void getTenantId() throws Exception {
 		String url = siteURL+"/_vti_bin/client.svc/";
 		HttpGet get = new HttpGet(url);
-		get.setHeader(org.apache.http.HttpHeaders.AUTHORIZATION, "Bearer");
+		get.setHeader(HttpHeaders.AUTHORIZATION, "Bearer");
 		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 
 		try (CloseableHttpResponse response = httpClient.execute(get, (HttpContext) null)) {
 			Header[] headers = response.getHeaders("WWW-Authenticate");
 			for (Header h : headers) {
-				HeaderElement[] elements = h.getElements();
-				for (HeaderElement e : elements) {
-					if ("Bearer realm".equals(e.getName())) {
-						spOnlineRealm = e.getValue();
-					}
-					if ("client_id".equals(e.getName())) {
-						spOnlineClientId = e.getValue();
-					}
+				if ("Bearer realm".equals(h.getName())) {
+					spOnlineRealm = h.getValue();
+				}
+				if ("client_id".equals(h.getName())) {
+					spOnlineClientId = h.getValue();
 				}
 			}
 		}
@@ -124,7 +121,7 @@ public class CloudTokenForClientIdGetter {
 		String resourceStr = spOnlineClientId + "/" + url.getHost() + "@" + spOnlineRealm;
 
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+		builder.setMode(HttpMultipartMode.LEGACY);
 		StringBody stringBody = new StringBody("client_credentials", ContentType.MULTIPART_FORM_DATA);
 		builder.addPart("grant_type", stringBody);
 		stringBody = new StringBody(clientId, ContentType.MULTIPART_FORM_DATA);

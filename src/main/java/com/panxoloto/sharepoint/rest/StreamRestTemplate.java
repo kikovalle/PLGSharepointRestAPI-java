@@ -12,7 +12,7 @@ import java.util.List;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -91,13 +91,13 @@ public class StreamRestTemplate extends RestTemplate {
 		private boolean isStream = false;
 
 		@Override
-		public HttpStatus getStatusCode() throws IOException {
+		public HttpStatusCode getStatusCode() throws IOException {
 			return delegate.getStatusCode();
 		}
 
 		@Override
 		public int getRawStatusCode() throws IOException {
-			return delegate.getRawStatusCode();
+			return delegate.getStatusCode().value();
 		}
 
 		@Override
