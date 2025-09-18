@@ -73,6 +73,7 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 					  String cert, String certPasswd, String tenant, String scope) throws Exception {
 		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setBufferRequestBody(false);
 		requestFactory.setHttpClient(httpClient);
 		this.restTemplate = new StreamRestTemplate(requestFactory);
 

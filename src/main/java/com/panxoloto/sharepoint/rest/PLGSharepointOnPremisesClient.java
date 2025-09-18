@@ -66,6 +66,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		        .setDefaultCredentialsProvider(credsProvider)
 		        .build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setBufferRequestBody(false);
 		requestFactory.setHttpClient(httpClient);
 		this.restTemplate = new StreamRestTemplate(requestFactory);
 
