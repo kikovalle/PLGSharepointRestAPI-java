@@ -6,8 +6,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
@@ -19,11 +22,16 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.azure.core.credential.AccessToken;
+import com.azure.core.credential.TokenRequestContext;
+import com.azure.identity.ClientCertificateCredential;
+import com.azure.identity.ClientCertificateCredentialBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -35,11 +43,31 @@ public class CloudTokenForClientIdGetter {
 	private String clientId;
 	private String clientSecret;
 	private String siteURL;
+	private Supplier<HttpClientBuilder> httpClientBuilderSupplier;
 
-	public CloudTokenForClientIdGetter(String clientId, String clientSecret, String siteURL) {
+	private String certificatePath;
+	private String certificatePassword;
+	private String clientTenant;
+	private String sharepointScope;
+
+	public CloudTokenForClientIdGetter(String clientId, String clientSecret, String siteURL,
+									   Supplier<HttpClientBuilder> httpClientBuilderSupplier,
+									   String certificatePath,
+									   String certificatePassword,
+									   String clientTenant,
+									   String sharepointScope) {
+		this(clientId, clientSecret, siteURL, HttpClients::custom);
+		this.certificatePath = certificatePath;
+		this.certificatePassword = certificatePassword;
+		this.clientTenant = clientTenant;
+		this.sharepointScope = sharepointScope;
+	}
+
+	public CloudTokenForClientIdGetter(String clientId, String clientSecret, String siteURL, Supplier<HttpClientBuilder> httpClientBuilderSupplier) {
 		this.clientId = clientId;
 		this.clientSecret = clientSecret;
 		this.siteURL = siteURL;
+		this.httpClientBuilderSupplier = httpClientBuilderSupplier;
 	}
 
 	private String spOnlineRealm = null;
@@ -67,7 +95,7 @@ public class CloudTokenForClientIdGetter {
 		String url = siteURL+"/_vti_bin/client.svc/";
 		HttpGet get = new HttpGet(url);
 		get.setHeader(org.apache.http.HttpHeaders.AUTHORIZATION, "Bearer");
-		CloseableHttpClient httpClient = HttpClients.custom().build();
+		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 
 		try (CloseableHttpResponse response = httpClient.execute(get, (HttpContext) null)) {
 			Header[] headers = response.getHeaders("WWW-Authenticate");
@@ -86,25 +114,34 @@ public class CloudTokenForClientIdGetter {
 	}
 
 	private void getBearerToken() throws Exception {
-		String url = "https://accounts.accesscontrol.windows.net/" + spOnlineRealm + "/tokens/OAuth/2";
-		HttpPost post = new HttpPost(url);
-		HttpEntity multipart = fillInSPOnlineTokenRequestData();
-		post.setEntity(multipart);
 
-		CloseableHttpClient httpClient = HttpClients.custom().build();
-		Date reqDate = new Date();
-		try (CloseableHttpResponse response = httpClient.execute(post, (HttpContext) null)) {
-			HttpEntity entity = response.getEntity();
-			InputStream instream = entity.getContent();
-			String json = IOUtils.toString(instream, StandardCharsets.UTF_8.name());
+		AccessToken spToken = getSharepointAccessToken();
 
-			JsonParser jp = new JsonParser();
-			JsonReader jr = new JsonReader(new StringReader(json));
-			jr.setLenient(true);
-			JsonObject reply = jp.parse(jr).getAsJsonObject();
-			spOnlineToken = reply.get("access_token").getAsString();
-			spOnlineTokenType = reply.get("token_type").getAsString();
-			spOnlineTokenExpiration = new Date(reqDate.getTime() + reply.get("expires_in").getAsLong() * 1000);
+		if (spToken != null) {
+			spOnlineToken = spToken.getToken();
+			spOnlineTokenType = spToken.getTokenType();
+			spOnlineTokenExpiration = new Date(spToken.getExpiresAt().toInstant().toEpochMilli());
+		} else {
+			String url = "https://accounts.accesscontrol.windows.net/" + spOnlineRealm + "/tokens/OAuth/2";
+			HttpPost post = new HttpPost(url);
+			HttpEntity multipart = fillInSPOnlineTokenRequestData();
+			post.setEntity(multipart);
+
+			CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
+			Date reqDate = new Date();
+			try (CloseableHttpResponse response = httpClient.execute(post, (HttpContext) null)) {
+				HttpEntity entity = response.getEntity();
+				InputStream instream = entity.getContent();
+				String json = IOUtils.toString(instream, StandardCharsets.UTF_8.name());
+
+				JsonParser jp = new JsonParser();
+				JsonReader jr = new JsonReader(new StringReader(json));
+				jr.setLenient(true);
+				JsonObject reply = jp.parse(jr).getAsJsonObject();
+				spOnlineToken = reply.get("access_token").getAsString();
+				spOnlineTokenType = reply.get("token_type").getAsString();
+				spOnlineTokenExpiration = new Date(reqDate.getTime() + reply.get("expires_in").getAsLong() * 1000);
+			}
 		}
 
 		LOG.debug("got SPonline token", "token: " + spOnlineToken.substring(0, 15) + "..., expiration: " + spOnlineTokenExpiration);
@@ -128,6 +165,35 @@ public class CloudTokenForClientIdGetter {
 
 		HttpEntity multipart = builder.build();
 		return multipart;
+	}
+
+
+	private AccessToken getAccessToken(ClientCertificateCredential clientCertificateCredential, String scope) throws ExecutionException, InterruptedException {
+		TokenRequestContext request = new TokenRequestContext().addScopes(scope);
+		AccessToken token = clientCertificateCredential.getToken(request).toFuture().get();
+		return token;
+	}
+
+	private ClientCertificateCredential getClientCertCredential(String spClientId, String spTenantId, String spCertPrivateKey, String certPrivateKeyPath) {
+		return new ClientCertificateCredentialBuilder()
+				.clientId(spClientId)
+				.tenantId(spTenantId)
+				.pfxCertificate(certPrivateKeyPath, spCertPrivateKey).build();
+	}
+
+
+	private AccessToken getSharepointAccessToken() throws Exception {
+		if (StringUtils.isBlank(certificatePath)) {
+			return null;
+		}
+		URL certPrivateKeyPathUrl = new URL("file://" + certificatePath);
+
+		if(certPrivateKeyPathUrl != null) {
+				ClientCertificateCredential certificateCredential
+						= getClientCertCredential(clientId, clientTenant, certificatePassword, certPrivateKeyPathUrl.getPath());
+				return getAccessToken(certificateCredential, sharepointScope);
+		}
+		return null;
 	}
 
 }

@@ -77,6 +77,16 @@ public interface PLGSharepointClient {
 	JSONObject getListItems(String title, String jsonExtendedAttrs, String filter) throws Exception;
 	
 	/**
+	 * @param title
+	 * @param itemId
+	 * @param jsonExtendedAttrs
+	 * @param query
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception;
+	
+	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
 	 * @param jsonExtendedAttrs extended body for the query.
 	 * @return json string representing folder info.
@@ -239,4 +249,43 @@ public interface PLGSharepointClient {
 	 * @throws Exception
 	 */
 	JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception;
+
+	/**
+	 * @param folder
+	 * @param resource
+	 * @param jsonMetadata
+	 * @param chunkFileSize
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize) throws Exception;
+
+	/**
+	 * @param folder
+	 * @param resource
+	 * @param jsonMetadata
+	 * @param chunkFileSize
+	 * @param fileName
+	 * @return
+	 */
+	JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize, String fileName) throws Exception;
+
+	/**
+	 * @param listTitle
+	 * @param itemId
+	 * @param itemType
+	 * @param data
+	 * @return
+	 * @throws Exception
+	 */
+	boolean updateListItem(String listTitle, int itemId, String itemType, JSONObject data) throws Exception;
+
+	/**
+	 * @param listTitle
+	 * @param itemType
+	 * @param data
+	 * @return
+	 * @throws Exception
+	 */
+	JSONObject createListItem(String listTitle, String itemType, JSONObject data) throws Exception;
 }

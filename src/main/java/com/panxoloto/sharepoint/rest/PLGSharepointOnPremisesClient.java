@@ -3,12 +3,14 @@ package com.panxoloto.sharepoint.rest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,6 +29,7 @@ import com.panxoloto.sharepoint.rest.helper.HeadersOnPremiseHelper;
 import com.panxoloto.sharepoint.rest.helper.HttpProtocols;
 import com.panxoloto.sharepoint.rest.helper.Permission;
 
+
 public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 
@@ -38,9 +41,11 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	private HttpProtocols protocol = HttpProtocols.HTTPS;
 	private String digestKey = null;
 	private Date digestKeyExpiration;
+	private Supplier<HttpClientBuilder> httpClientBuilderSupplier = HttpClients::custom;
 
 	private static final int DEFAULT_EXPIRATION = 1800;
-
+	private static final String METADATA = "__metadata";
+	
 	/**
 	 * @param spSiteUr.- The sharepoint site URL like https://contoso.sharepoint.com/sites/contososite
 	 */
@@ -57,7 +62,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		
 		CredentialsProvider credsProvider = new BasicCredentialsProvider();
 		credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(user, passwd, spSiteUrl, domain));
-		CloseableHttpClient httpClient = HttpClients.custom()
+		CloseableHttpClient httpClient = httpClientBuilderSupplier.get()
 		        .setDefaultCredentialsProvider(credsProvider)
 		        .build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
@@ -271,7 +276,12 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		LOG.debug("getListByTitle {} jsonExtendedAttrs {}", new Object[] {title, jsonExtendedAttrs});
 		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
 
-	    RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs, 
+		if (!filter.startsWith("$filter=")) {
+			LOG.debug("Missing $filter in filter string, adding");
+			filter = String.format("%s%s", "$filter=", filter);
+		}
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 	        headers, HttpMethod.GET, 
 	        this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items", filter)
 	        );
@@ -280,6 +290,65 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	        restTemplate.exchange(requestEntity, String.class);
 
 	    return new JSONObject(responseEntity.getBody());
+	}
+
+	@Override
+	public JSONObject getListItem(String title, int itemId, String jsonExtendedAttrs, String query) throws Exception {
+		LOG.debug("getListItem {} itemId {} jsonExtendedAttrs {} query {}", new Object[] {title, itemId, jsonExtendedAttrs, query});
+		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
+				headers, HttpMethod.GET,
+				this.tokenHelper.getSharepointSiteUrl("/_api/lists/GetByTitle('" + title + "')/items(" + itemId + ")", query)
+		);
+
+		ResponseEntity<String> responseEntity =
+				restTemplate.exchange(requestEntity, String.class);
+
+		return new JSONObject(responseEntity.getBody());
+	}
+
+
+	@Override
+	public JSONObject createListItem(String listTitle, String itemType, JSONObject data) throws Exception {
+		LOG.debug("updateListItem list {} itemType {} data {}", new Object[] {listTitle, itemType, data});
+		JSONObject payload = new JSONObject(data, JSONObject.getNames(data));
+		if (itemType != null && !payload.has(METADATA)) {
+			JSONObject meta = new JSONObject();
+			meta.put("type", itemType);
+			payload.put(METADATA, meta);
+		}
+
+		String payloadStr = payload.toString();
+		MultiValueMap<String, String> headers = headerHelper.getPostHeaders(payloadStr);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr,
+				headers, HttpMethod.POST,
+				this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + listTitle + "')/items")
+		);
+		ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
+		return new JSONObject(responseEntity.getBody());
+	}
+
+	@Override
+	public boolean updateListItem(String listTitle, int itemId, String itemType, JSONObject data) throws Exception {
+		LOG.debug("updateListItem list {} itemId {} itemType {} data {}", new Object[] {listTitle, itemId, itemType, data});
+		JSONObject payload = new JSONObject(data, JSONObject.getNames(data));
+		if (itemType != null && !payload.has(METADATA)) {
+			JSONObject meta = new JSONObject();
+			meta.put("type", itemType);
+			payload.put(METADATA, meta);
+		}
+
+		String payloadStr = payload.toString();
+		MultiValueMap<String, String> headers = headerHelper.getUpdateHeaders(payloadStr);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(payloadStr,
+				headers, HttpMethod.POST,
+				this.tokenHelper.getSharepointSiteUrl("/_api/web/lists/GetByTitle('" + listTitle + "')/items(" + itemId +")")
+		);
+		ResponseEntity<String> responseEntity =  restTemplate.exchange(requestEntity, String.class);
+		return responseEntity.getStatusCode().is2xxSuccessful();
 	}
 	
 	/**
@@ -304,6 +373,36 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	    return new JSONObject(responseEntity.getBody());
 	}
 
+	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs, String query) throws Exception {
+		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {} query {}", new Object[] {folder, jsonExtendedAttrs, query});
+		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
+
+		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
+				headers, HttpMethod.GET,
+				this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/Files", query)
+		);
+
+		ResponseEntity<String> responseEntity =
+				restTemplate.exchange(requestEntity, String.class);
+
+		return new JSONObject(responseEntity.getBody());
+	}
+
+	/**
+	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
+	 * @param jsonExtendedAttrs extended body for the query.
+	 * @return json string representing list of files
+	 * @throws Exception thrown when something went wrong.
+	 */
+	@Override
+	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
+		return getFolderFilesByRelativeUrl(folder, jsonExtendedAttrs, null);
+	}
+
+	@Override
+	public JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception {
+		return getFolderFilesByRelativeUrl(folderServerRelativeUrl, "{}");
+	}
 
 	/**
 	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
@@ -319,29 +418,6 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
 			  headers, HttpMethod.GET,
 			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/Folders")
-		);
-
-		ResponseEntity<String> responseEntity =
-				restTemplate.exchange(requestEntity, String.class);
-
-		return new JSONObject(responseEntity.getBody());
-	}
-
-
-	/**
-	 * @param folder folder server relative URL to retrieve (/SITEURL/folder)
-	 * @param jsonExtendedAttrs extended body for the query.
-	 * @return json string representing list of files
-	 * @throws Exception thrown when something went wrong.
-	 */
-	@Override
-	public JSONObject getFolderFilesByRelativeUrl(String folder, String jsonExtendedAttrs) throws Exception {
-		LOG.debug("getFolderFilesByRelativeUrl {} jsonExtendedAttrs {}", new Object[] {folder, jsonExtendedAttrs});
-		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
-
-		RequestEntity<String> requestEntity = new RequestEntity<>(jsonExtendedAttrs,
-			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folder + "')/Files")
 		);
 
 		ResponseEntity<String> responseEntity =
@@ -409,7 +485,7 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 
 		RequestEntity<String> requestEntity = new RequestEntity<>("",
 			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value")
+			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFileByServerRelativeUrl('" + fileServerRelativeUrl +"')/$value", "binaryStringResponseBody=true")
 		);
 
 		ResponseEntity<InputStreamResource> response = restTemplate.exchange(requestEntity, InputStreamResource.class);
@@ -830,20 +906,15 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	}
 
 	@Override
-	public JSONObject getFolderFilesByRelativeUrl(String folderServerRelativeUrl) throws Exception {
-		LOG.debug("getFolderFilesByRelativeUrl {} ", new Object[] {folderServerRelativeUrl});
-		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(false);
-
-		RequestEntity<String> requestEntity = new RequestEntity<>("{}",
-			  headers, HttpMethod.GET,
-			  this.tokenHelper.getSharepointSiteUrl("/_api/web/GetFolderByServerRelativeUrl('" + folderServerRelativeUrl + "')/Files")
-		);
-
-		ResponseEntity<String> responseEntity =
-				restTemplate.exchange(requestEntity, String.class);
-
-		return new JSONObject(responseEntity.getBody());
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize) throws Exception {
+		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
+		throw new RuntimeException("Implementation pending");
 	}
-	
 
+	@Override
+	public JSONObject uploadBigFile(String folder, Resource resource, JSONObject jsonMetadata, int chunkFileSize,
+			String fileName) throws Exception {
+		LOG.debug("Uploading Big file {} to folder {}", resource.getFilename(), folder);
+		throw new RuntimeException("Implementation pending");
+	}
 }
