@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.kikovalle.com.panxoloto.sharepoint.rest</groupId>
 	<artifactId>PLGSharepointRestAPI</artifactId>
-	<version>1.0.8-mdw</version>
+	<version>1.0.9-mdw</version>
 	<name>PLGSharepointRestAPI-java</name>
 	<description>Sharepoint Rest API v1 easy to use java library for sharepoint online.</description>
 	<url>https://github.com/kikovalle/PLGSharepointRestAPI-java</url>
