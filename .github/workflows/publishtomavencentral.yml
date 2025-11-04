@@ -1,0 +1,49 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish:
+    name: Bump Maven version, release on GitHub and Maven Central
+    runs-on: ubuntu-20.04
+    environment: 
+      name: env
+      url: https://github.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          # We need all tags and commits to be able to determine new bump type
+          fetch-depth: 0
+
+      - name: Install GPG secret key
+        run: echo -n "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | base64 --decode | gpg --import --batch
+
+      - name: List secret GPG keys
+        run: gpg --list-secret-keys --keyid-format LONG
+
+      - name: Set up Java with Maven
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          gpg.passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Publish to Maven Central
+        run:  mvn   --batch-mode  -DskipTests  -Prelease  deploy -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} -Dgpg-passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

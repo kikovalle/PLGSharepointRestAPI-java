@@ -1,6 +1,35 @@
 # Change Log
 Changelog registry
 
+## 2022-03-11
+- Released version 1.0.8 under MIT license and published to Maven Central
+- Added methods for creating and updating a list item
+- Added custom HttpClientBuilder support (Online client)
+
+## 2022-02-24
+- Configurable HttpClient
+- Method to retrieve information about a list item.
+- Version updated to 1.0.7 to release to maven central.
+
+## 2022-01-15
+- Control upload big file folder name to remove spSitePrefix from the remote path. Detected file corruption with files with a size bigger than 0.5GB.
+- Version increased to 1.0.5 to release to maven repo.
+- Spring framework dependency version updated.
+
+## 2021-12-03
+### Added
+- Method overwrite for chunked upload from a mem byte buffer, allowing to provide a filename.
+
+### Changed
+- Renamed parameter to chunkFileSize
+
+## 2021-12-02
+### Added
+- Chunked file upload implementation for Sharepoint Online client for uploading big files.
+
+### Changed
+- Group id changed to adapt code to generate releases to maven central.
+
 ## 2021-06-02
 ### Added
 - Allow using cloud logging with clientID/clientSecret

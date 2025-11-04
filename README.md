@@ -9,16 +9,24 @@ If you find this usefull and saves you some time renember you can support me so 
 
 This is a maven project that uses spring RestTemplate to communicate with the server, but can be use in a non-spring application as you'll see in the examples I provide.
 
+The API has been finally released to Maven Central repository (https://s01.oss.sonatype.org/#view-repositories;releases~browsestorage~io/github/kikovalle/com/panxoloto/sharepoint/rest/PLGSharepointRestAPI), so from now it is possible to include the dependency in a easier way. Simply add this to your pom.xml replacing the 1.0.3 version with the latest version of the API.
+
+		<dependency>
+			<groupId>io.github.kikovalle.com.panxoloto.sharepoint.rest</groupId>
+			<artifactId>PLGSharepointRestAPI</artifactId>
+			<version>1.0.3</version>
+		</dependency>
+
 As this is a maven project you have to clone this repo and compile it with maven. You can modify the pom.xml to include any distribution management repository that you use in your company so you can make use of the library in any other java project
   
     mvn clean install
 
 Once the project is build, you can include the dependency in any other project as follow:
-
+		
 		<dependency>
-			<groupId>com.panxoloto.sharepoint.rest</groupId>
+			<groupId>io.github.kikovalle.com.panxoloto.sharepoint.rest</groupId>
 			<artifactId>PLGSharepointRestAPI</artifactId>
-			<version>0.0.1</version>
+			<version>1.0.3</version>
 		</dependency>
   
 Once this is done you can test this simple examples to perform actions in your sharepoint sites.

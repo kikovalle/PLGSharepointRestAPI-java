@@ -77,6 +77,47 @@
 	            </configuration>
 	        </plugin>
   			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+						</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
+			</plugin>
+			
+			<plugin>
+	            <groupId>org.sonatype.plugins</groupId>
+	            <artifactId>nexus-staging-maven-plugin</artifactId>
+	            <version>1.6.8</version>
+	            <extensions>true</extensions>
+	            <configuration>
+	                <serverId>ossrh</serverId>
+	                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+	                <autoReleaseAfterClose>true</autoReleaseAfterClose>
+	            </configuration>
+	        </plugin>
+  			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.5.1</version>
 				<configuration>
@@ -113,6 +154,11 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>${spring.framework}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+			<version>1.9.4</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
 		<dependency>
