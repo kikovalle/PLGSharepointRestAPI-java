@@ -5,6 +5,8 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
@@ -74,14 +76,14 @@ public class CloudTokenForClientIdGetter {
 	private String spOnlineClientId;
 	private String spOnlineToken = null;
 	private String spOnlineTokenType;
-	private Date spOnlineTokenExpiration = new Date(0l);
+	private LocalDateTime spOnlineTokenExpiration = LocalDateTime.now().minusMinutes(1);
 
 	public String getToken() {
 		try {
 			if (spOnlineRealm == null) {
 				getTenantId();
 			}
-			if (spOnlineToken == null || new Date().after(spOnlineTokenExpiration)) {
+			if (spOnlineToken == null || LocalDateTime.now().isAfter(spOnlineTokenExpiration)) {
 				getBearerToken();
 			}
 		} catch (Exception e) {
@@ -120,7 +122,7 @@ public class CloudTokenForClientIdGetter {
 		if (spToken != null) {
 			spOnlineToken = spToken.getToken();
 			spOnlineTokenType = spToken.getTokenType();
-			spOnlineTokenExpiration = new Date(spToken.getExpiresAt().toInstant().toEpochMilli());
+			spOnlineTokenExpiration = spToken.getExpiresAt().atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime().minusMinutes(1);
 		} else {
 			String url = "https://accounts.accesscontrol.windows.net/" + spOnlineRealm + "/tokens/OAuth/2";
 			HttpPost post = new HttpPost(url);
@@ -140,7 +142,7 @@ public class CloudTokenForClientIdGetter {
 				JsonObject reply = jp.parse(jr).getAsJsonObject();
 				spOnlineToken = reply.get("access_token").getAsString();
 				spOnlineTokenType = reply.get("token_type").getAsString();
-				spOnlineTokenExpiration = new Date(reqDate.getTime() + reply.get("expires_in").getAsLong() * 1000);
+				spOnlineTokenExpiration = LocalDateTime.now().plusSeconds(reply.get("expires_in").getAsLong()).minusMinutes(1);
 			}
 		}
 

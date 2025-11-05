@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.kikovalle.com.panxoloto.sharepoint.rest</groupId>
 	<artifactId>PLGSharepointRestAPI</artifactId>
-	<version>1.0.9-mdw</version>
+	<version>1.1.1-mdw</version>
 	<name>PLGSharepointRestAPI-java</name>
 	<description>Sharepoint Rest API v1 easy to use java library for sharepoint online.</description>
 	<url>https://github.com/kikovalle/PLGSharepointRestAPI-java</url>
@@ -230,7 +230,14 @@
 			<version>3.18.0</version>
 		</dependency>
 
-	</dependencies>
+        <dependency>
+            <groupId>com.sun.xml.messaging.saaj</groupId>
+            <artifactId>saaj-impl</artifactId>
+            <version>1.5.3</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 
 	<profiles>
     	<profile>
