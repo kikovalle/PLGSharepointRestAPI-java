@@ -6,7 +6,7 @@ on:
 jobs:
   publish:
     name: Bump Maven version, release on GitHub and Maven Central
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     environment: 
       name: env
       url: https://github.com
