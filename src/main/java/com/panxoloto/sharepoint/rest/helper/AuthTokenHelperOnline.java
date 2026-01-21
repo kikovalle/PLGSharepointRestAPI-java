@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
 
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;

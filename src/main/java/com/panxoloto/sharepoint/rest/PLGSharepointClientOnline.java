@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -73,7 +73,6 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 					  String cert, String certPasswd, String tenant, String scope) throws Exception {
 		CloseableHttpClient httpClient = httpClientBuilderSupplier.get().build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-		requestFactory.setBufferRequestBody(false);
 		requestFactory.setHttpClient(httpClient);
 		this.restTemplate = new StreamRestTemplate(requestFactory);
 
