@@ -1,13 +1,13 @@
 package com.panxoloto.sharepoint.rest.helper;
 
-import javax.xml.soap.SOAPFault;
+import jakarta.xml.soap.SOAPFault;
 
 public class AuthenticationException
 	extends RuntimeException
 {
 	private static final long serialVersionUID = 1L;
 
-	public final SOAPFault reason;
+	public final transient SOAPFault reason;
 	
 	public AuthenticationException( final String message, final Throwable cause ) 
 	{

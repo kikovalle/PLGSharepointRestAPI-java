@@ -443,11 +443,11 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 */
 	@Override
 	public InputStreamResource downloadFile(String fileServerRelativeUrl) throws Exception {
-	    return downloadFileWithReponse(fileServerRelativeUrl).getBody();
+	    return downloadFileWithResponse(fileServerRelativeUrl).getBody();
 	}
 
 	@Override
-	public ResponseEntity<InputStreamResource> downloadFileWithReponse(String fileServerRelativeUrl) throws Exception {
+	public ResponseEntity<InputStreamResource> downloadFileWithResponse(String fileServerRelativeUrl) throws Exception {
 		LOG.debug("Downloading file {} ", fileServerRelativeUrl);
 
 		MultiValueMap<String, String> headers = headerHelper.getGetHeaders(true);
