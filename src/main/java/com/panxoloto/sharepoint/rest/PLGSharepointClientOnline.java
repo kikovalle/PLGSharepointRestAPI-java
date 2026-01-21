@@ -3,6 +3,7 @@ package com.panxoloto.sharepoint.rest;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -28,8 +29,10 @@ import com.panxoloto.sharepoint.rest.helper.Permission;
 
 public class PLGSharepointClientOnline implements PLGSharepointClient {
 
-
 	private static final Logger LOG = LoggerFactory.getLogger(PLGSharepointClientOnline.class);
+	public static final String CONTENT_LENGTH = "Content-Length";
+	public static final String CONTENT_TYPE = "Content-Type";
+	public static final String ACCEPT = "Accept";
 	private MultiValueMap<String, String> headers;
 	private RestTemplate restTemplate;
 	private String spSiteUrl;
@@ -472,12 +475,11 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 			submeta.put("type", "SP.ListItem");
 		}
 		jsonMetadata.put("__metadata", submeta);
-		java.util.UUID uuid = java.util.UUID.randomUUID();
 		String cleanFolderName = folder.startsWith(spSiteUrl) ? folder.substring(spSiteUrl.length() + 1) : folder;
 		
 		Resource tmpRes = new ByteArrayResource(new byte[0]);
 		headers = headerHelper.getPostHeaders("");
-	    headers.remove("Content-Length");
+	    headers.remove(CONTENT_LENGTH);
 
 	    RequestEntity<Resource> requestEntityCreate = new RequestEntity<>(tmpRes, 
 	        headers, HttpMethod.POST, 
@@ -494,29 +496,32 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    
 	    JSONObject jsonFileInfo = new JSONObject(fileInfoStr);
 		String serverRelativeUrl = jsonFileInfo.getJSONObject("d").getString("ServerRelativeUrl");
-		
+		String uuid = UUID.randomUUID().toString();
+
 		headers = headerHelper.getPostHeaders("");
-	    headers.remove("Content-Length");
+	    headers.remove(CONTENT_LENGTH);
 	    headers.remove("Content-length");
-	    headers.remove("Accept");
-	    headers.remove("Content-Type");
-	    headers.add("Content-Type", "application/octet-stream");
-	    headers.add("Accept", "application/json;odata=verbose");
-	    headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+	    headers.remove(ACCEPT);
+	    headers.remove(CONTENT_TYPE);
+	    headers.add(CONTENT_TYPE, "application/octet-stream");
+	    headers.add(ACCEPT, "application/json;odata=verbose");
+	    // headers.add("X-RequestDigest", this.tokenHelper.getFormDigestValue());
+
 	    byte[] bytes = new byte[chunkSize];
 	    try (InputStream is = resource.getInputStream();) {
 	    	boolean firstChunk = true;
 	    	int totalLength = is.available();
 	    	int readed = 0;
-	    	while (is.read(bytes) != -1) {
-	    		readed += bytes.length;
-	    		headers.remove("Cmontent-Length");
+			int bufLen;
+	    	while ((bufLen = is.read(bytes)) != -1) {
+	    		readed += bufLen;
+	    		headers.remove(CONTENT_LENGTH);
 	    		if (firstChunk) {
-	    			headers.add("Content-Length", "" + bytes.length);
-	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes, 
+					headers.add(CONTENT_LENGTH, "" + bufLen);
+	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes,
 	    					headers, HttpMethod.POST, 
 	    					this.tokenHelper.getSharepointSiteUrl(
-	    							"_api/web/getfilebyserverrelativeurl('" + ( serverRelativeUrl) +"')/startupload(uploadId=guid'" + uuid.toString() + "')"
+	    							"/_api/web/getfilebyserverrelativeurl('" + ( serverRelativeUrl) +"')/startupload(uploadId=guid'" + uuid.toString() + "')"
 	    							)
 	    					);
 	    			restTemplate.exchange(requestEntity, String.class);
@@ -527,7 +532,8 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 	    			});
 	    			firstChunk = false;
 	    		} else if (readed < totalLength) {
-	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes, 
+					headers.add(CONTENT_LENGTH, "" + bufLen);
+	    			RequestEntity<byte[]> requestEntity = new RequestEntity<>(bytes,
 	    					headers, HttpMethod.POST, 
 	    					this.tokenHelper.getSharepointSiteUrl(
 	    							"/_api/web/getfilebyserverrelativeurl('" + (serverRelativeUrl) +"')/continueupload(uploadId=guid'" + uuid.toString() 
@@ -595,9 +601,10 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		jsonMetadata.put("__metadata", submeta);
 		
 	    headers = headerHelper.getPostHeaders("");
-	    headers.remove("Content-length");
-	    headers.remove("Content-Type");
-	    headers.add("Content-Type", "multipart/form-data");
+		headers.remove(CONTENT_LENGTH);
+		headers.remove("Content-length");
+	    headers.remove(CONTENT_TYPE);
+	    headers.add(CONTENT_TYPE, "multipart/form-data");
 
 	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
 	        headers, HttpMethod.POST, 
@@ -648,9 +655,10 @@ public class PLGSharepointClientOnline implements PLGSharepointClient {
 		jsonMetadata.put("__metadata", submeta);
 		
 	    headers = headerHelper.getPostHeaders("");
+		headers.remove(CONTENT_LENGTH);
 	    headers.remove("Content-length");
-	    headers.remove("Content-Type");
-	    headers.add("Content-Type", "multipart/form-data");
+	    headers.remove(CONTENT_TYPE);
+	    headers.add(CONTENT_TYPE, "multipart/form-data");
 
 	    RequestEntity<Resource> requestEntity = new RequestEntity<>(resource, 
 	        headers, HttpMethod.POST, 
