@@ -170,6 +170,11 @@
 
 
 	<dependencies>
+		<dependency>
+		    <groupId>jakarta.xml.soap</groupId>
+		    <artifactId>jakarta.xml.soap-api</artifactId>
+		    <version>3.0.2</version>
+		</dependency>
 			<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
