@@ -5,13 +5,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -21,7 +16,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
 
 import com.panxoloto.sharepoint.rest.helper.AuthTokenHelperOnPremises;
@@ -58,33 +52,8 @@ public class PLGSharepointOnPremisesClient implements PLGSharepointClient {
 	 */
 	public PLGSharepointOnPremisesClient(String user, 
 			String passwd, String domain, String spSiteUrl, String spSitePrefix) {
-		super();
-		
-		CredentialsProvider credsProvider = new BasicCredentialsProvider();
-		credsProvider.setCredentials(AuthScope.ANY, new NTCredentials(user, passwd, spSiteUrl, domain));
-		CloseableHttpClient httpClient = httpClientBuilderSupplier.get()
-		        .setDefaultCredentialsProvider(credsProvider)
-		        .build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-		requestFactory.setHttpClient(httpClient);
-		this.restTemplate = new StreamRestTemplate(requestFactory);
+		throw new IllegalStateException("Onprem is not supported under httpclient 5.x and Spring 6+ since NTCredentials are not supported. Use older version of this library instead.");
 
-		this.spSiteUrl = spSiteUrl;
-		if (this.spSiteUrl.endsWith("/")) {
-			LOG.debug("spSiteUri ends with /, removing character");
-			this.spSiteUrl = this.spSiteUrl.substring(0, this.spSiteUrl.length() - 1);
-		}
-		if (!this.spSiteUrl.startsWith("/")) {
-			LOG.debug("spSiteUri doesnt start with /, adding character");
-			this.spSiteUrl = String.format("%s%s", "/", this.spSiteUrl);
-		}
-		try {
-			LOG.debug("Wrapper auth initialization performed successfully. Now you can perform actions on the site.");
-			this.headerHelper = new HeadersOnPremiseHelper(this);
-			this.tokenHelper = new AuthTokenHelperOnPremises(spSitePrefix, spSiteUrl);
-		} catch (Exception e) {
-			LOG.error("Initialization failed!! Please check the user, pass, domain and spSiteUri parameters you provided", e);
-		}
 	}
 
 	public HttpProtocols getProtocol() {
